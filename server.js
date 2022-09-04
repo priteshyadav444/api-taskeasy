@@ -11,7 +11,7 @@ const userRouter = require('./routes/UserRoute');
 const taskRouter = require('./routes/TaskRoute');
 const PORT = process.env.PORT || 3000;
 const mongoose = require("mongoose");
-const cors = require('cors');
+// const cors = require('cors');
 
 
 app.use(function (request, response, next) {
@@ -19,9 +19,10 @@ app.use(function (request, response, next) {
   response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
-app.use(cors({
-  origin: '*'
-}));
+
+// app.use(cors({
+//   origin: '*'
+// }));
 
 app.use('/v1/users', userRouter);
 app.use("/v1/tasks", taskRouter)
