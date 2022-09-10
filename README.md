@@ -4,7 +4,7 @@
 All the API with on success Response Format and  Error Message.
 
 1)Create Task
-https://api-taskeasy.herokuapp.com/v1/users/tasks/ (Post)
+https://api-taskeasy.onrender.com/v1/users/tasks/ (Post)
 
 Errors:
 
@@ -12,7 +12,7 @@ Errors:
 
 
 2)Get Task Array
-https://api-taskeasy.herokuapp.com/v1/users/tasks/ (GET)
+https://api-taskeasy.onrender.com/v1/users/tasks/ (GET)
 
 Errors:
 SOMETHING_WENT_WRONG
@@ -70,7 +70,7 @@ Success:
 
 
 3)Get Task Details By Id
-https://api-taskeasy.herokuapp.com/v1/users/tasks/625bcdfc932003d586fcac8f (GET)
+https://api-taskeasy.onrender.com/v1/users/tasks/625bcdfc932003d586fcac8f (GET)
 
 Error:
 
@@ -111,7 +111,7 @@ Success:
 
 
 4)Get Completed Task Details By Id
-https://api-taskeasy.herokuapp.com/v1/users/load <GET>
+https://api-taskeasy.onrender.com/v1/users/load <GET>
 
 
 Error:
@@ -135,7 +135,7 @@ Success:
 
 
 5)Create User Account
-https://api-taskeasy.herokuapp.com/v1/users/signup <POST>
+https://api-taskeasy.onrender.com/v1/users/signup <POST>
 
 Error :
 
@@ -160,7 +160,7 @@ Success:
 
 
 6)Login Users
-https://api-taskeasy.herokuapp.com/v1/users/signin <POST>
+https://api-taskeasy.onrender.com/v1/users/signin <POST>
 
 errors:
 
