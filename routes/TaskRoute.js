@@ -123,4 +123,41 @@ router.put("/update", authUser, function (req, res) {
     }
   );
 });
+
+// v1/tasks
+// Get ALl  Task
+// Auth Required
+
+router.delete("/:id", authUser, (req, res) => {
+  console.log("v1/tasks/" + req.params.id + " METHOD : DELETE");
+  const userid = req.user;
+  const taskid = req.params.id;
+
+  User.findOneAndUpdate(
+    { _id: userid },
+    {
+      $pull: { tasks: { _id: taskid } },
+    },
+    { new: true },
+    function (err, result) {
+      if (err) {
+        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      }
+
+      if (result) {
+        const task = result.tasks.find((rs) => {
+          if (rs._id.toString() == taskid.toString()) {
+            return rs;
+          }
+        });
+
+        if (task) {
+          return res.status(200).json({ task });
+        } else {
+          return res.status(200).json({ msg: "TASK_NOT_FOUND" });
+        }
+      }
+    }
+  );
+});
 module.exports = router;
