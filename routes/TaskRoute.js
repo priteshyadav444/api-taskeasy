@@ -9,12 +9,12 @@ const authUser = require("../middleware/authUser");
 // v1/tasks
 // Create Task
 // Auth Required
-router.post("/", authUser,function (req, res) {
+router.post("/", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
   var { title, description, category, scheduled_date, completed, subtasklist } =
     req.body;
-  const userid =  req.user;
+  const userid = req.user;
 
   if (scheduled_date == null || scheduled_date == "") {
     scheduled_type = "unscheduled_task";
@@ -96,4 +96,31 @@ router.get("/:id", (req, res) => {
   });
 });
 
+// v1/tasks/
+// Get ALl  Task
+// Auth Required Update
+
+router.put("/update", authUser, function (req, res) {
+  console.log("v1/tasks/ METHOD : put");
+  const userid = req.user;
+  const data = req.body;
+
+  User.updateOne(
+    { _id: userid, "tasks._id": data },
+    {
+      $set: {
+        "tasks.$.task_status": data.task_status,
+      },
+    },
+    function (err, result) {
+      if (err) {
+        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      }
+
+      if (result) {
+        return res.status(200).json({ msg: "SUCESS" });
+      }
+    }
+  );
+});
 module.exports = router;
