@@ -101,7 +101,7 @@ router.get("/:id", (req, res) => {
 // Auth Required Update
 
 router.put("/update", authUser, function (req, res) {
-  console.log("v1/tasks/ METHOD : put");
+  console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
   const data = req.body;
 
@@ -109,7 +109,7 @@ router.put("/update", authUser, function (req, res) {
     { _id: userid, "tasks._id": data },
     {
       $set: {
-        "tasks.$.task_status": data.task_status,
+        "tasks.$": data,
       },
     },
     function (err, result) {
