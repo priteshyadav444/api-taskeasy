@@ -9,12 +9,49 @@ const authUser = require("../middleware/authUser");
 // v1/tasks
 // Create Task
 // Auth Required
+// router.post("/", authUser, function (req, res) {
+//   console.log("v1/tasks/ METHOD : POST");
+//   const _id = ObjectId();
+//   var { title, description, category, scheduled_date, completed, subtasklist } =
+//     req.body;
+//   const userid = req.user;
+
+//   if (scheduled_date == null || scheduled_date == "") {
+//     scheduled_type = "unscheduled_task";
+//   } else {
+//     scheduled_type = "scheduled_task";
+//   }
+
+//   if (!title) {
+//     return res.status(400).json({ msg: "TITLE_REQUIRED" });
+//   }
+//   const newTask = {
+//     title,
+//     description,
+//     category,
+//     scheduled_type,
+//     scheduled_date,
+//     completed,
+//     subtasklist,
+//     _id,
+//   };
+
+//   User.updateOne({ _id: userid }, { $push: { tasks: newTask } })
+//     .then((result) => {
+//       res.status(200).json(newTask);
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//       return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+//     });
+// });
 router.post("/", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
   var { title, description, category, scheduled_date, completed, subtasklist } =
     req.body;
   const userid = req.user;
+  const projectid = "634c77fe9b0bdb5860e4e801";
 
   if (scheduled_date == null || scheduled_date == "") {
     scheduled_type = "unscheduled_task";
@@ -36,7 +73,14 @@ router.post("/", authUser, function (req, res) {
     _id,
   };
 
-  User.updateOne({ _id: userid }, { $push: { tasks: newTask } })
+  User.updateOne(
+    { _id: userid, "projects._id": projectid },
+    {
+      $push: {
+        "projects.$.tasks": newTask,
+      },
+    }
+  )
     .then((result) => {
       res.status(200).json(newTask);
     })
@@ -52,14 +96,15 @@ router.post("/", authUser, function (req, res) {
 router.get("/", authUser, (req, res) => {
   console.log("v1/tasks/ METHOD : GET");
   const userid = req.user;
+  const projectid = "634c77fe9b0bdb5860e4e801";
 
-  User.findOne({ _id: userid }, function (err, result) {
+  User.findOne({ _id: userid, "projects._id": projectid }, function (err, result) {
     if (err) {
       res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
     }
 
     if (result) {
-      const taskList = result.tasks;
+      const taskList = result.projects[0].tasks;
       return res.status(200).json([...taskList]);
     }
   });
@@ -72,7 +117,6 @@ router.get("/", authUser, (req, res) => {
 router.get("/:id", (req, res) => {
   console.log("v1/tasks/" + req.params.id + " METHOD : GET");
   const userid = "625bcdfc932003d586fcac8f";
-
   const taskid = req.params.id;
 
   User.findOne({ _id: userid }, function (err, result) {
@@ -104,15 +148,36 @@ router.put("/update", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
   const data = req.body;
+  const projectid = "634c77fe9b0bdb5860e4e801";
 
+  console.log(data._id);
   User.updateOne(
-    { _id: userid, "tasks._id": data },
+    { 
+      _id: userid
+    },
     {
       $set: {
-        "tasks.$": data,
+        "projects.$[pid].tasks.$[tid]": data,
       },
     },
+    {
+      "multi":false,
+      "upsert":false,
+      arrayFilters : [
+        {
+          "pid._id" : {
+            "$eq" : projectid
+          }
+        },
+        {
+          "tid._id" : {
+            "$eq" : data._id
+          }
+        },
+      ]
+    },
     function (err, result) {
+      console.log(err);
       if (err) {
         res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       }
@@ -132,30 +197,20 @@ router.delete("/:id", authUser, (req, res) => {
   console.log("v1/tasks/" + req.params.id + " METHOD : DELETE");
   const userid = req.user;
   const taskid = req.params.id;
-
-  User.findOneAndUpdate(
+ console.log(taskid);
+ console.log(userid);
+  User.updateOne(
     { _id: userid },
     {
-      $pull: { tasks: { _id: taskid } },
+      $pull: { "projects.0.tasks": { _id: taskid } },
     },
-    { new: true },
     function (err, result) {
+      console.log(err)
       if (err) {
         res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       }
-
-      if (result) {
-        const task = result.tasks.find((rs) => {
-          if (rs._id.toString() == taskid.toString()) {
-            return rs;
-          }
-        });
-
-        if (task) {
-          return res.status(200).json({ task });
-        } else {
-          return res.status(200).json({ msg: "TASK_NOT_FOUND" });
-        }
+      else{
+      return res.status(200).json({ msg: "TASK_DELETED_SUCCESS" , data:result});
       }
     }
   );
