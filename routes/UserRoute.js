@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
+const { ObjectId } = require("mongodb");
 
 // v1/users/signup
 // Create Account
@@ -147,4 +148,30 @@ router.get("/load", authUser, (req, res) => {
   });
 });
 
+// v1/users/project
+// Create Project
+// Public
+router.post("/project", authUser, (req, res) => {
+  console.log("v1/users/project METHOD : POST");
+  const _id = ObjectId();
+  const userid = req.user;
+  var { project_title } = req.body;
+  console.log(project_title);
+  console.log(userid)
+  if(project_title==null || project_title ==""){
+    return res.status(400).json({ msg: "PROJECT_TITLE_REQUIRED" });
+  }
+  else{
+    const newproject = { project_title , _id }
+    User.updateOne({ _id: userid }, { $push: { projects: newproject } })
+    .then((result) => {
+      res.status(200).json(newproject);
+    })
+    .catch((err) => {
+      console.log(err);
+      return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+    });
+  }
+
+});
 module.exports = router;
