@@ -10,14 +10,14 @@ const authUser = require("../middleware/authUser");
 // Create Task
 // Auth Required
 
-router.post("/", authUser, function (req, res) {
+router.post("/:id", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
   var {pid, title, description, category, scheduled_date, completed, subtasklist } =
     req.body;
   const userid = req.user;
   const projectid = req.params.id;
-
+  console.log(projectid);
   if (scheduled_date == null || scheduled_date == "") {
     scheduled_type = "unscheduled_task";
   } else {
