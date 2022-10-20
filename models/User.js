@@ -28,7 +28,7 @@ const UserScheme = new Schema(
               required: true,
               default: "unscheduled_task",
             },
-            scheduled_date: { type: Date, default: null },
+            scheduled_date: { type: Date, default: Date.now() },
             subtasklist: [
               {
                 stitle: { type: String, required: true },
