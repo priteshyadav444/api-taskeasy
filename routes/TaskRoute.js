@@ -13,7 +13,7 @@ const authUser = require("../middleware/authUser");
 router.post("/", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
-  var { title, description, category, scheduled_date, completed, subtasklist } =
+  var {pid, title, description, category, scheduled_date, completed, subtasklist } =
     req.body;
   const userid = req.user;
   const projectid = req.params.id;
@@ -189,3 +189,25 @@ router.delete("/:pid/:id", authUser, (req, res) => {
   );
 });
 module.exports = router;
+
+router.get("/all/tasks", authUser, (req, res) => {
+  console.log("v1/tasks/all METHOD : All tasks");
+  const userid = req.user;
+  
+  console.log(userid);
+
+  User.findOne(
+    { _id: userid, "projects._id": "634c77fe9b0bdb5860e4e801" },
+    { "projects.$": 1 },
+    function (err, result) {
+      if (err) {
+        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      }
+
+      if (result) {
+        const taskList = result.projects[0].tasks;
+        return res.status(200).json([...taskList]);
+      }
+    }
+  );
+});
