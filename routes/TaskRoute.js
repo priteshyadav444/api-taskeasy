@@ -13,7 +13,7 @@ const authUser = require("../middleware/authUser");
 router.post("/:id", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
-  var {pid, title, description, category, scheduled_date, completed, subtasklist } =
+  var {pid, title, description, category, badge, scheduled_date, completed, subtasklist } =
     req.body;
   const userid = req.user;
   const projectid = req.params.id;
@@ -35,9 +35,10 @@ router.post("/:id", authUser, function (req, res) {
     scheduled_date,
     completed,
     subtasklist,
+    badge,
     _id,
   };
-
+  
   User.updateOne(
     { _id: userid, "projects._id": projectid },
     {
