@@ -13,8 +13,16 @@ const authUser = require("../middleware/authUser");
 router.post("/:id", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
-  var {pid, title, description, category, badge, scheduled_date, completed, subtasklist } =
-    req.body;
+  var {
+    pid,
+    title,
+    description,
+    category,
+    badge,
+    scheduled_date,
+    completed,
+    subtasklist,
+  } = req.body;
   const userid = req.user;
   const projectid = req.params.id;
   console.log(projectid);
@@ -38,7 +46,7 @@ router.post("/:id", authUser, function (req, res) {
     badge,
     _id,
   };
-  
+
   User.updateOne(
     { _id: userid, "projects._id": projectid },
     {
@@ -77,6 +85,11 @@ router.get("/:id", authUser, (req, res) => {
 
       if (result) {
         const taskList = result.projects[0].tasks;
+        taskList.sort(function (a, b) {
+          var c = new Date(a.updatedAt);
+          var d = new Date(b.updatedAt);
+          return d-c;
+        });
         return res.status(200).json([...taskList]);
       }
     }
@@ -194,7 +207,7 @@ module.exports = router;
 router.get("/all/tasks", authUser, (req, res) => {
   console.log("v1/tasks/all METHOD : All tasks");
   const userid = req.user;
-  
+
   console.log(userid);
 
   User.findOne(
