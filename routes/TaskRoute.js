@@ -26,11 +26,16 @@ router.post("/:id", authUser, function (req, res) {
   const userid = req.user;
   const projectid = req.params.id;
   console.log(projectid);
+
   if (scheduled_date == null || scheduled_date == "") {
     scheduled_type = "unscheduled_task";
   } else {
     scheduled_type = "scheduled_task";
   }
+
+  // if(new Date(scheduled_date) < new Date()){
+  //   return res.status(400).json({ msg: "DATE_INVALID" });
+  // }
 
   if (!title) {
     return res.status(400).json({ msg: "TITLE_REQUIRED" });
