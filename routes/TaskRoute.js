@@ -138,7 +138,10 @@ router.get("/:id", authUser, (req, res) => {
 router.put("/update/:pid", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
-  const data = req.body;
+  console.log(req.body)
+  const updatedAt = new Date();
+  const data = { ...req.body, updatedAt: new Date(updatedAt) };
+  console.log(data)
   const projectid = req.params.pid;
 
   console.log(data._id);
