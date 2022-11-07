@@ -139,8 +139,17 @@ router.put("/update/:pid", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
   console.log(req.body)
-  const updatedAt = new Date();
-  const data = { ...req.body, updatedAt: new Date(updatedAt) };
+ 
+  var data = { ...req.body, updatedAt: new Date() };
+
+  if(req.body.task_status=="active" && req.body.startedAt==null){
+    data = { ...req.body, startedAt: new Date() };
+  }
+
+  if(req.body.task_status=="done"){
+    data = { ...req.body, completedAt: new Date() };
+  }
+  
   console.log(data)
   const projectid = req.params.pid;
 
