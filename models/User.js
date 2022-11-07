@@ -37,6 +37,7 @@ const UserScheme = new Schema(
             ],
             createdAt: { type: Date, default: Date.now() },
             updatedAt: { type: Date, default: Date.now() },
+            startedAt: { type: Date, default:null },
           },
         ],
         createdAt: { type: Date, default: Date.now() },
