@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const { ObjectId } = require("bson");
 const authUser = require("../middleware/authUser");
+const { convertCompilerOptionsFromJson } = require("typescript");
 
 // v1/tasks
 // Create Task
@@ -79,7 +80,6 @@ router.get("/:id", authUser, (req, res) => {
   console.log("v1/tasks/ METHOD : GET");
   const userid = req.user;
   const projectid = req.params.id;
-  console.log(projectid);
   User.findOne(
     { _id: userid, "projects._id": projectid },
     { "projects.$": 1 },
@@ -101,7 +101,6 @@ router.get("/:id", authUser, (req, res) => {
   );
 });
 
-// v1/tasks
 // Get ALl  Task
 // Auth Required
 
@@ -138,22 +137,27 @@ router.get("/:id", authUser, (req, res) => {
 router.put("/update/:pid", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
-  console.log(req.body)
- 
+  var inno = 0;
   var data = { ...req.body, updatedAt: new Date() };
-
-  if(req.body.task_status=="active" && req.body.startedAt==null){
+  
+  if(data.task_status=="active" && data.startedAt==null){
     data = { ...req.body, startedAt: new Date() };
   }
+  else{
+    inno = -1;
+  }
 
-  if(req.body.task_status=="done"){
-    data = { ...req.body, completedAt: new Date() };
+  if(data.task_status=="done"){
+    inno = 1;
+    console.log(data.startedAt+"Done Insize");
+    if(data.startedAt==null){
+      data = { ...data, startedAt: new Date() };
+      console.log(data)
+    }
+    data = { ...data, completedAt: new Date() };
   }
   
-  console.log(data)
   const projectid = req.params.pid;
-
-  console.log(data._id);
   User.updateOne(
     {
       _id: userid,
@@ -161,6 +165,9 @@ router.put("/update/:pid", authUser, function (req, res) {
     {
       $set: {
         "projects.$[pid].tasks.$[tid]": data,
+      },
+      $inc: {
+        "projects.$[pid].total_completed_tasks": inno,
       },
     },
     {
@@ -180,9 +187,9 @@ router.put("/update/:pid", authUser, function (req, res) {
       ],
     },
     function (err, result) {
-      console.log(err);
+      console.log(err)
       if (err) {
-        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+        return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       }
 
       if (result) {
@@ -224,8 +231,6 @@ module.exports = router;
 router.get("/all/tasks", authUser, (req, res) => {
   console.log("v1/tasks/all METHOD : All tasks");
   const userid = req.user;
-
-  console.log(userid);
 
   User.findOne(
     { _id: userid, "projects._id": "634c77fe9b0bdb5860e4e801" },
