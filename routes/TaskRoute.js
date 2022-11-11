@@ -26,7 +26,6 @@ router.post("/:id", authUser, function (req, res) {
   } = req.body;
   const userid = req.user;
   const projectid = req.params.id;
-  console.log(projectid);
 
   if (scheduled_date == null || scheduled_date == "") {
     scheduled_type = "unscheduled_task";
@@ -101,35 +100,6 @@ router.get("/:id", authUser, (req, res) => {
   );
 });
 
-// Get ALl  Task
-// Auth Required
-
-// router.get("/:id", (req, res) => {
-//   console.log("v1/tasks/" + req.params.id + " METHOD : GET");
-//   const userid = "625bcdfc932003d586fcac8f";
-//   const taskid = req.params.id;
-
-//   User.findOne({ _id: userid }, function (err, result) {
-//     if (err) {
-//       res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-//     }
-
-//     if (result) {
-//       const task = result.tasks.find((rs) => {
-//         if (rs._id.toString() == taskid.toString()) {
-//           return rs;
-//         }
-//       });
-
-//       if (task) {
-//         return res.status(200).json({ task });
-//       } else {
-//         return res.status(200).json({ msg: "TASK_NOT_FOUND" });
-//       }
-//     }
-//   });
-// });
-
 // v1/tasks/
 // Get ALl  Task
 // Auth Required Update
@@ -149,10 +119,9 @@ router.put("/update/:pid", authUser, function (req, res) {
 
   if(data.task_status=="done"){
     inno = 1;
-    console.log(data.startedAt+"Done Insize");
+   
     if(data.startedAt==null){
       data = { ...data, startedAt: new Date() };
-      console.log(data)
     }
     data = { ...data, completedAt: new Date() };
   }
