@@ -181,7 +181,11 @@ router.delete("/:pid/:id", authUser, (req, res) => {
   User.updateOne(
     { _id: userid, "projects._id": projectid },
     {
-      $pull: { "projects.$.tasks": { _id: taskid } },
+      $inc: {
+        "projects.$.total_tasks": -1,
+      },
+      $pull: { "projects.$.tasks": { _id: taskid },
+    },
     },
     function (err, result) {
       console.log(err);
