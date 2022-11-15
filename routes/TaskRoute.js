@@ -107,18 +107,15 @@ router.get("/:id", authUser, (req, res) => {
 router.put("/update/:pid", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
-  var inno = 0;
   var data = { ...req.body, updatedAt: new Date() };
+  var isTaskCompleted = 0;
   
   if(data.task_status=="active" && data.startedAt==null){
     data = { ...req.body, startedAt: new Date() };
   }
-  else{
-    inno = -1;
-  }
 
   if(data.task_status=="done"){
-    inno = 1;
+    isTaskCompleted = 1;
    
     if(data.startedAt==null){
       data = { ...data, startedAt: new Date() };
@@ -136,7 +133,7 @@ router.put("/update/:pid", authUser, function (req, res) {
         "projects.$[pid].tasks.$[tid]": data,
       },
       $inc: {
-        "projects.$[pid].total_completed_tasks": inno,
+        "projects.$[pid].total_completed_tasks": isTaskCompleted,
       },
     },
     {
