@@ -2,10 +2,8 @@ var express = require("express");
 const User = require("../models/User");
 var router = express.Router();
 require("dotenv").config();
-
 const { ObjectId } = require("bson");
 const authUser = require("../middleware/authUser");
-const { convertCompilerOptionsFromJson } = require("typescript");
 
 // v1/tasks
 // Create Task
