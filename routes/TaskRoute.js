@@ -196,12 +196,12 @@ router.delete("/:pid/:id", authUser, (req, res) => {
 });
 module.exports = router;
 
-router.get("/all/tasks", authUser, (req, res) => {
-  console.log("v1/tasks/all METHOD : All tasks");
+router.get("/calender/:pid", authUser, (req, res) => {
+  console.log("v1/tasks/calender METHOD : All tasks");
   const userid = req.user;
-
+  const pid = req.params.pid;
   User.findOne(
-    { _id: userid, "projects._id": "634c77fe9b0bdb5860e4e801" },
+    { _id: userid, "projects._id": pid },
     { "projects.$": 1 },
     function (err, result) {
       if (err) {
