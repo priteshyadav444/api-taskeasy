@@ -196,8 +196,43 @@ router.delete("/:pid/:id", authUser, (req, res) => {
 });
 module.exports = router;
 
-router.get("/calender/:pid", authUser, (req, res) => {
+
+// v1/tasks/calander/all
+//calender by all project 
+// Auth Required
+router.get("/calender/all/", authUser, (req, res) => {
   console.log("v1/tasks/calender METHOD : All tasks");
+  const userid = req.user;
+  const pid = req.params.pid;
+  User.findOne(
+    { _id: userid},
+    function (err, result) {
+      if (err) {
+        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      }
+      var arr1 = [];
+      var arr2 = [];
+      if (result) {
+        var data = []
+        for (let index = 0; index < 3; index++) {
+          const taskList = result.projects[index];
+          console.log("FIrst :" , taskList.tasks);
+          Array.prototype.push.apply(arr1,taskList.tasks); 
+        }
+        // console.log(arr1);
+        return res.status(200).json(arr1);
+      }
+    }
+  );
+});
+
+
+
+// v1/tasks/calander/:id
+//calender by project id
+// Auth Required
+router.get("/calender/:pid/", authUser, (req, res) => {
+  console.log("v1/tasks/calender METHOD : tasks By Id");
   const userid = req.user;
   const pid = req.params.pid;
   User.findOne(
