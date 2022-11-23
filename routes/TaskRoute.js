@@ -211,15 +211,11 @@ router.get("/calender/all/", authUser, (req, res) => {
         res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       }
       var arr1 = [];
-      var arr2 = [];
       if (result) {
-        var data = []
-        for (let index = 0; index < 3; index++) {
-          const taskList = result.projects[index];
-          console.log("FIrst :" , taskList.tasks);
+        for (let key in result.projects) {
+          const taskList = result.projects[key];
           Array.prototype.push.apply(arr1,taskList.tasks); 
         }
-        // console.log(arr1);
         return res.status(200).json(arr1);
       }
     }
