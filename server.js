@@ -9,6 +9,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 const userRouter = require('./routes/UserRoute');
 const taskRouter = require('./routes/TaskRoute');
+const projectRouter = require('./routes/ProjectRoute')
 const PORT = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const cors = require('cors');
@@ -26,6 +27,7 @@ app.use(cors({
 
 app.use('/v1/users', userRouter);
 app.use("/v1/tasks", taskRouter)
+app.use("/v1/tasks", projectRouter)
 
 mongoose
   .connect(uri, {
