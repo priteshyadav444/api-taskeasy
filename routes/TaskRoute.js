@@ -71,7 +71,7 @@ router.post("/:id", authUser, function (req, res) {
 });
 
 // v1/tasks
-// Get ALl  Task
+// Get All  Task
 // Auth Required
 router.get("/:id", authUser, (req, res) => {
   console.log("v1/tasks/ METHOD : GET");
@@ -99,7 +99,7 @@ router.get("/:id", authUser, (req, res) => {
 });
 
 // v1/tasks/
-// Get ALl  Task
+// Get All  Task
 // Auth Required Update
 
 router.put("/update/:pid", authUser, function (req, res) {
@@ -164,7 +164,7 @@ router.put("/update/:pid", authUser, function (req, res) {
 });
 
 // v1/tasks
-// Get ALl  Task
+// Get All  Task
 // Auth Required
 
 router.delete("/:pid/:id", authUser, (req, res) => {
