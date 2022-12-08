@@ -45,52 +45,6 @@ const UserScheme = new Schema(
         updatedAt: { type: Date, default: Date.now() },
       },
     ],
-
-    tasks: [
-      {
-        title: { type: String, required: true },
-        completed: { type: Boolean, default: false },
-        description: { type: String, default: null },
-        task_status: { type: String, required: true, default: "pending" },
-        category: { type: String, default: "None" },
-        badge: { type: String, default: "low" },
-        scheduled_type: {
-          type: String,
-          required: true,
-          default: "unscheduled_task",
-        },
-        scheduled_date: { type: Date, default: null },
-        subtasklist: [
-          {
-            stitle: { type: String, required: true },
-            checked: { type: Boolean, default: false },
-          },
-        ],
-        createdAt: { type: Date, default: Date.now() },
-        updatedAt: { type: Date, default: Date.now() },
-      },
-    ],
-    completed_task: [
-      {
-        title: { type: String, required: true },
-        completed: { type: Boolean, default: false },
-        description: { type: String, default: null },
-        task_status: { type: String, required: true, default: "pending" },
-        category: { type: String, default: "None" },
-        badge: { type: String, default: "low" },
-        scheduled_type: {
-          type: String,
-          required: true,
-          default: "unscheduled_task",
-        },
-      },
-    ],
-    starred: { type: Boolean, default: false },
-    repeat: {
-      status: { type: Boolean, default: false },
-      type: { type: String, default: null },
-      date: { type: Date, default: Date.now() },
-    },
   },
   {
     timestamps: true,
