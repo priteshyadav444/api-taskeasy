@@ -8,7 +8,6 @@ const authUser = require("../middleware/authUser");
 // v1/tasks
 // Create Task
 // Auth Required
-
 router.post("/:id", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId();
@@ -90,7 +89,7 @@ router.get("/:id", authUser, (req, res) => {
         taskList.sort(function (a, b) {
           var c = new Date(a.updatedAt);
           var d = new Date(b.updatedAt);
-          return d-c;
+          return d - c;
         });
         return res.status(200).json([...taskList]);
       }
@@ -107,20 +106,20 @@ router.put("/update/:pid", authUser, function (req, res) {
   const userid = req.user;
   var data = { ...req.body, updatedAt: new Date() };
   var isTaskCompleted = 0;
-  
-  if(data.task_status=="active" && data.startedAt==null){
+
+  if (data.task_status == "active" && data.startedAt == null) {
     data = { ...req.body, startedAt: new Date() };
   }
 
-  if(data.task_status=="done"){
+  if (data.task_status == "done") {
     isTaskCompleted = 1;
-   
-    if(data.startedAt==null){
+
+    if (data.startedAt == null) {
       data = { ...data, startedAt: new Date() };
     }
     data = { ...data, completedAt: new Date() };
   }
-  
+
   const projectid = req.params.pid;
   User.updateOne(
     {
@@ -151,7 +150,7 @@ router.put("/update/:pid", authUser, function (req, res) {
       ],
     },
     function (err, result) {
-      console.log(err)
+      console.log(err);
       if (err) {
         return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       }
@@ -179,8 +178,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
       $inc: {
         "projects.$.total_tasks": -1,
       },
-      $pull: { "projects.$.tasks": { _id: taskid },
-    },
+      $pull: { "projects.$.tasks": { _id: taskid } },
     },
     function (err, result) {
       console.log(err);
@@ -196,33 +194,33 @@ router.delete("/:pid/:id", authUser, (req, res) => {
 });
 module.exports = router;
 
-
 // v1/tasks/calander/all
-//calender by all project 
+//calender by all project
 // Auth Required
 router.get("/calender/all/", authUser, (req, res) => {
   console.log("v1/tasks/calender METHOD : All tasks");
   const userid = req.user;
   const pid = req.params.pid;
-  User.findOne(
-    { _id: userid},
-    function (err, result) {
-      if (err) {
-        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-      }
-      var arr1 = [];
-      if (result) {
-        for (let key in result.projects) {
-          const taskList = result.projects[key];
-          Array.prototype.push.apply(arr1,taskList.tasks); 
-        }
-        return res.status(200).json(arr1);
-      }
+  User.findOne({ _id: userid }, function (err, result) {
+    if (err) {
+      res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
     }
-  );
+    var arr1 = [];
+    if (result) {
+      for (let key in result.projects) {
+        let project = result.projects[key];
+        const theme_colour = project.theme_colour;
+        project.tasks = project.tasks.filter(data => data.task_status!='done')
+        project.tasks = project.tasks.map((data) => {
+          return { ...data, theme_colour };
+        });
+        console.log(theme_colour);
+        Array.prototype.push.apply(arr1, project.tasks);
+      }
+      return res.status(200).json(arr1);
+    }
+  });
 });
-
-
 
 // v1/tasks/calander/:id
 //calender by project id

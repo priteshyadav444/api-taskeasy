@@ -15,6 +15,7 @@ const UserScheme = new Schema(
         project_deadline: { type: Date, default: null },
         total_tasks: { type: Number, default: 0 },
         total_completed_tasks: { type: Number, default: 0 },
+        theme_colour :{ type:String, default: "#D2DAFF"},
         tasks: [
           {
             title: { type: String, required: true },
@@ -29,6 +30,7 @@ const UserScheme = new Schema(
               default: "unscheduled_task",
             },
             scheduled_date: { type: Date, default: Date.now() },
+            theme_colour :{ type:String, default: "#D2DAFF"},
             subtasklist: [
               {
                 stitle: { type: String, required: true },
