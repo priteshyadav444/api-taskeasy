@@ -210,11 +210,10 @@ router.get("/calender/all/", authUser, (req, res) => {
       for (let key in result.projects) {
         let project = result.projects[key];
         const theme_colour = project.theme_colour;
-        project.tasks = project.tasks.filter(data => data.task_status!='done')
+        project.tasks = project.tasks.filter(data => (data.task_status=='unscheduled' || data.task_status=='pending'))
         project.tasks = project.tasks.map((data) => {
           return { ...data, theme_colour };
         });
-        console.log(theme_colour);
         Array.prototype.push.apply(arr1, project.tasks);
       }
       return res.status(200).json(arr1);
@@ -239,16 +238,12 @@ router.get("/calender/:pid/", authUser, (req, res) => {
 
       if (result) {
         let taskList = result.projects[0].tasks;
-        console.log(taskList)
         const theme_colour = result.projects[0].theme_colour;
-        taskList = taskList.filter(data => data.task_status!='done')
-        console.log(taskList)
-        console.log(taskList)
+        taskList = taskList.filter(data => (data.task_status=='unscheduled' || data.task_status=='pending'))
         taskList = taskList.map((data) => {
           data.theme_colour = theme_colour;
           return data;
       });
-      console.log(taskList)
       return res.status(200).json(taskList);
       }
     }
