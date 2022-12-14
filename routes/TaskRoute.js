@@ -238,8 +238,18 @@ router.get("/calender/:pid/", authUser, (req, res) => {
       }
 
       if (result) {
-        const taskList = result.projects[0].tasks;
-        return res.status(200).json([...taskList]);
+        let taskList = result.projects[0].tasks;
+        console.log(taskList)
+        const theme_colour = result.projects[0].theme_colour;
+        taskList = taskList.filter(data => data.task_status!='done')
+        console.log(taskList)
+        console.log(taskList)
+        taskList = taskList.map((data) => {
+          data.theme_colour = theme_colour;
+          return data;
+      });
+      console.log(taskList)
+      return res.status(200).json(taskList);
       }
     }
   );
