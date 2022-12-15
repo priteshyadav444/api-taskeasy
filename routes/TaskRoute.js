@@ -61,7 +61,7 @@ router.post("/:id", authUser, function (req, res) {
     }
   )
     .then((result) => {
-      res.status(200).json(newTask);
+      res.status(200).json(result);
     })
     .catch((err) => {
       console.log(err);
