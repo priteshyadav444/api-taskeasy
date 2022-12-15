@@ -24,11 +24,6 @@ const UserScheme = new Schema(
             task_status: { type: String, required: true, default: "pending" },
             category: { type: String, default: "None" },
             badge: { type: String, default: "low" },
-            scheduled_type: {
-              type: String,
-              required: true,
-              default: "unscheduled_task",
-            },
             scheduled_date: { type: Date, default: Date.now() },
             theme_colour :{ type:String, default: "#D2DAFF"},
             subtasklist: [

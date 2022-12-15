@@ -10,7 +10,7 @@ const authUser = require("../middleware/authUser");
 // Auth Required
 router.post("/:id", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
-  const _id = ObjectId();
+  const _id = ObjectId().toHexString();
   var {
     pid,
     title,
@@ -20,6 +20,7 @@ router.post("/:id", authUser, function (req, res) {
     scheduled_date,
     completed,
     subtasklist,
+    theme_colour,
   } = req.body;
   const userid = req.user;
   const projectid = req.params.id;
@@ -37,19 +38,19 @@ router.post("/:id", authUser, function (req, res) {
   if (!title) {
     return res.status(400).json({ msg: "TITLE_REQUIRED" });
   }
-  const newTask = {
+  let newTask = {
     title,
     description,
     category,
-    scheduled_type,
     scheduled_date,
     completed,
     subtasklist,
     badge,
+    theme_colour,
     _id,
   };
-
-  User.updateOne(
+  console.log(newTask);
+  User.findOneAndUpdate(
     { _id: userid, "projects._id": projectid },
     {
       $push: {
@@ -58,14 +59,19 @@ router.post("/:id", authUser, function (req, res) {
       $inc: {
         "projects.$.total_tasks": 1,
       },
-    }
+    },
+    { new: true }
   )
     .then((result) => {
-      res.status(200).json(result);
+      const task_status = "pending";
+      const createdAt = new Date();
+      const updatedAt = new Date();
+      const startedAt = new Date();
+      newTask = { ...newTask,task_status,createdAt,updatedAt,startedAt };
+      res.status(200).json(newTask);
     })
     .catch((err) => {
-      console.log(err);
-      return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
     });
 });
 
@@ -85,13 +91,15 @@ router.get("/:id", authUser, (req, res) => {
       }
 
       if (result) {
-        const taskList = result.projects[0].tasks;
-        taskList.sort(function (a, b) {
+        const tasks = result.projects[0].tasks;
+        result.projects[0].tasks = [];
+        const projectDetails = result.projects[0];
+        tasks.sort(function (a, b) {
           var c = new Date(a.updatedAt);
           var d = new Date(b.updatedAt);
           return d - c;
         });
-        return res.status(200).json([...taskList]);
+        return res.status(200).json({ tasks, projectDetails });
       }
     }
   );
@@ -210,7 +218,10 @@ router.get("/calender/all/", authUser, (req, res) => {
       for (let key in result.projects) {
         let project = result.projects[key];
         const theme_colour = project.theme_colour;
-        project.tasks = project.tasks.filter(data => (data.task_status=='unscheduled' || data.task_status=='pending'))
+        project.tasks = project.tasks.filter(
+          (data) =>
+            data.task_status == "unscheduled" || data.task_status == "pending"
+        );
         project.tasks = project.tasks.map((data) => {
           return { ...data, theme_colour };
         });
@@ -239,12 +250,15 @@ router.get("/calender/:pid/", authUser, (req, res) => {
       if (result) {
         let taskList = result.projects[0].tasks;
         const theme_colour = result.projects[0].theme_colour;
-        taskList = taskList.filter(data => (data.task_status=='unscheduled' || data.task_status=='pending'))
+        taskList = taskList.filter(
+          (data) =>
+            data.task_status == "unscheduled" || data.task_status == "pending"
+        );
         taskList = taskList.map((data) => {
           data.theme_colour = theme_colour;
           return data;
-      });
-      return res.status(200).json(taskList);
+        });
+        return res.status(200).json(taskList);
       }
     }
   );
