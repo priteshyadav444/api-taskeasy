@@ -21,6 +21,7 @@ router.post("/:id", authUser, function (req, res) {
     completed,
     subtasklist,
     theme_colour,
+    task_status
   } = req.body;
   const userid = req.user;
   const projectid = req.params.id;
@@ -46,6 +47,7 @@ router.post("/:id", authUser, function (req, res) {
     completed,
     subtasklist,
     badge,
+    task_status,
     theme_colour,
     _id,
   };
@@ -63,11 +65,10 @@ router.post("/:id", authUser, function (req, res) {
     { new: true }
   )
     .then((result) => {
-      const task_status = "pending";
       const createdAt = new Date();
       const updatedAt = new Date();
       const startedAt = new Date();
-      newTask = { ...newTask,task_status,createdAt,updatedAt,startedAt };
+      newTask = { ...newTask,createdAt,updatedAt,startedAt };
       res.status(200).json(newTask);
     })
     .catch((err) => {
