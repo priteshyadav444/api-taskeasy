@@ -172,7 +172,7 @@ router.put("/update/:pid", authUser, function (req, res) {
 });
 
 // v1/tasks
-// Get All  Task
+// Delete Tasks
 // Auth Required
 
 router.delete("/:pid/:id", authUser, (req, res) => {
@@ -192,7 +192,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
     function (err, result) {
       console.log(err);
       if (err) {
-        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+        return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       } else {
         return res
           .status(200)
