@@ -21,7 +21,7 @@ router.post("/:id", authUser, function (req, res) {
     completed,
     subtasklist,
     theme_colour,
-    task_status
+    task_status,
   } = req.body;
   const userid = req.user;
   const projectid = req.params.id;
@@ -68,7 +68,7 @@ router.post("/:id", authUser, function (req, res) {
       const createdAt = new Date();
       const updatedAt = new Date();
       const startedAt = new Date();
-      newTask = { ...newTask,createdAt,updatedAt,startedAt };
+      newTask = { ...newTask, createdAt, updatedAt, startedAt };
       res.status(200).json(newTask);
     })
     .catch((err) => {
@@ -178,9 +178,8 @@ router.put("/update/:pid", authUser, function (req, res) {
 router.delete("/:pid/:id", authUser, (req, res) => {
   console.log("v1/tasks/" + req.params.id + " METHOD : DELETE");
   const userid = req.user;
-  const taskid = req.params.id;
   const projectid = req.params.pid;
-
+  
   User.updateOne(
     { _id: userid, "projects._id": projectid },
     {
