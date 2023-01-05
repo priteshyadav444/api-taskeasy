@@ -107,7 +107,7 @@ router.get("/:id", authUser, (req, res) => {
 });
 
 // v1/tasks/
-// Get All  Task
+// Update
 // Auth Required Update
 
 router.put("/update/:pid", authUser, function (req, res) {
