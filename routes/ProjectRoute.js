@@ -12,7 +12,7 @@ router.post("/project", authUser, (req, res) => {
   console.log("v1/users/project METHOD : POST");
   const _id = ObjectId();
   const userid = req.user;
-  var { project_title, project_deadline } = req.body;
+  var { project_title, project_deadline, theme_colour } = req.body;
   console.log(project_title);
   console.log(userid);
   if (project_title == null || project_title == "") {
@@ -24,6 +24,7 @@ router.post("/project", authUser, (req, res) => {
       project_deadline,
       total_tasks: 0,
       total_completed_tasks: 0,
+      theme_colour
     };
     User.updateOne({ _id: userid }, { $push: { projects: newproject } })
       .then((result) => {
