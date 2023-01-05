@@ -183,7 +183,6 @@ router.post("/project", authUser, (req, res) => {
 router.get("/project", authUser, (req, res) => {
   console.log("v1/users/ METHOD : Project");
   const userid = req.user;
-  const projectid = "634c77fe9b0bdb5860e4e801";
 
   User.findOne(
     { _id: userid },
