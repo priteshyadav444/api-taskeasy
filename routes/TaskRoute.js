@@ -178,6 +178,7 @@ router.put("/update/:pid", authUser, function (req, res) {
 router.delete("/:pid/:id", authUser, (req, res) => {
   console.log("v1/tasks/" + req.params.id + " METHOD : DELETE");
   const userid = req.user;
+  const taskid = req.params.id;
   const projectid = req.params.pid;
   
   User.updateOne(
