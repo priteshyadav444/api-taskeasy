@@ -8,8 +8,11 @@ var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
 
-router.post("/project", authUser, (req, res) => {
-  console.log("v1/users/project METHOD : POST");
+// v1/projects (POST)
+// Create Project
+// PRIVATE
+router.post("/", authUser, (req, res) => {
+  console.log("v1/project METHOD : POST");
   const _id = ObjectId();
   const userid = req.user;
   var { project_title, project_deadline, theme_colour } = req.body;
@@ -22,9 +25,9 @@ router.post("/project", authUser, (req, res) => {
       project_title,
       _id,
       project_deadline,
+      theme_colour,
       total_tasks: 0,
       total_completed_tasks: 0,
-      theme_colour
     };
     User.updateOne({ _id: userid }, { $push: { projects: newproject } })
       .then((result) => {
@@ -37,13 +40,12 @@ router.post("/project", authUser, (req, res) => {
   }
 });
 
-// v1/users/project
+// v1/projects (get)
 // Fetch All Project
 // Private
-router.get("/project", authUser, (req, res) => {
-  console.log("v1/users/ METHOD : Project");
+router.get("/", authUser, (req, res) => {
+  console.log("v1/projects/ METHOD : (GET)");
   const userid = req.user;
-  const projectid = "634c77fe9b0bdb5860e4e801";
 
   User.findOne({ _id: userid }, function (err, result) {
     if (err) {
@@ -57,8 +59,11 @@ router.get("/project", authUser, (req, res) => {
   });
 });
 
+// v1/projects/123h132g12 (id)
+// Delete Project
+// Private
 router.delete("/:pid", authUser, (req, res) => {
-  console.log("v1/users/project METHOD : DELETE");
+  console.log("v1/project/:id METHOD : DELETE");
   const projetid = req.params.pid;
   if (!projetid) {
     return res.status(404).json({ msg: "PROJECT_NOT_FOUND" });
