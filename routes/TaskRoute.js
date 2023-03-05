@@ -159,13 +159,13 @@ router.put("/update/:pid", authUser, function (req, res) {
       ],
     },
     function (err, result) {
-      console.log(err);
       if (err) {
+        console.log(err);
         return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       }
 
       if (result) {
-        return res.status(200).json({ msg: "SUCESS" });
+        return res.status(200).json({ msg: "SUCCESS" });
       }
     }
   );
@@ -180,7 +180,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
   const userid = req.user;
   const taskid = req.params.id;
   const projectid = req.params.pid;
-  
+
   User.updateOne(
     { _id: userid, "projects._id": projectid },
     {
