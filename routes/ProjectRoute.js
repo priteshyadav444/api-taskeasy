@@ -60,6 +60,47 @@ router.post("/", authUser, (req, res) => {
   }
 });
 
+// v1/projects/123h132g12 (id)
+// Update Project
+// Private
+router.put("/:projectId", authUser, (req, res) => {
+  console.log("v1/project METHOD : PUT");
+  const userid = req.user;
+  const projectId = req.params.projectId;
+  var { project_title, project_deadline, theme_colour } = req.body;
+
+  if (!projectId) {
+    return res.status(404).json({ msg: "PROJECT_NOT_FOUND" });
+  }
+  if((project_deadline == null || project_deadline == "") || (theme_colour == null || theme_colour == "")){
+    return res.status(400).json({ msg: "ALL_FIELD_REQUIRED" });
+  }
+  if (project_title == null || project_title == "") {
+    return res.status(400).json({ msg: "PROJECT_TITLE_REQUIRED" });
+  } else {
+    User.findOneAndUpdate(
+      { _id: userid, "projects._id": projectId },
+      {
+        $set: {
+          "projects.$.project_title": project_title,
+          "projects.$.project_deadline": project_deadline,
+          "projects.$.theme_colour": theme_colour,
+        },
+      },
+      { new: true }
+    )
+      .then((user) => {
+        const project = user.projects.find((p) => p._id.toString() === projectId);
+        if (!project) {
+          return res.status(404).json({ msg: "PROJECT_NOT_FOUND" });
+        }
+        res.status(200).json(project);
+      })
+      .catch((err) => {
+        return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      });
+  }
+});
 
 // v1/projects/123h132g12 (id)
 // Delete Project
@@ -77,6 +118,7 @@ router.delete("/:pid", authUser, (req, res) => {
       $pull: { projects: { _id: projetid } },
     },
     function (err, result) {
+      console.log(result);
       if (err) {
         return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       } else {
@@ -87,4 +129,5 @@ router.delete("/:pid", authUser, (req, res) => {
     }
   );
 });
+
 module.exports = router;
