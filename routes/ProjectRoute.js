@@ -8,6 +8,26 @@ var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
 
+
+// v1/projects (get)
+// Fetch All Project
+// Private
+router.get("/", authUser, (req, res) => {
+  console.log("v1/projects/ METHOD : (GET)");
+  const userid = req.user;
+
+  User.findOne({ _id: userid }, function (err, result) {
+    if (err) {
+      res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+    }
+
+    if (result) {
+      const projectList = result.projects;
+      return res.status(200).json([...projectList]);
+    }
+  });
+});
+
 // v1/projects (POST)
 // Create Project
 // PRIVATE
@@ -40,24 +60,6 @@ router.post("/", authUser, (req, res) => {
   }
 });
 
-// v1/projects (get)
-// Fetch All Project
-// Private
-router.get("/", authUser, (req, res) => {
-  console.log("v1/projects/ METHOD : (GET)");
-  const userid = req.user;
-
-  User.findOne({ _id: userid }, function (err, result) {
-    if (err) {
-      res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-    }
-
-    if (result) {
-      const projectList = result.projects;
-      return res.status(200).json([...projectList]);
-    }
-  });
-});
 
 // v1/projects/123h132g12 (id)
 // Delete Project
