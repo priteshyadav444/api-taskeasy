@@ -14,7 +14,7 @@ const { ObjectId } = require("mongodb");
 router.post("/signup", function (req, res) {
   const { firstname, lastname, password, email } = req.body;
   console.log("v1/users/signup METHOD : POST");
-  
+
   if (!firstname || !lastname || !email || !password) {
     return res.status(400).json({ msg: "ALL_FIELD_REQUIRED" });
   }
@@ -124,9 +124,8 @@ router.get("/load", authUser, (req, res) => {
   console.log("v1/users/load METHOD : GET  " + clientIp);
 
   User.findOne({ _id: req.user._id })
-  .then((member) => {
-   
-    jwt.sign(
+    .then((member) => {
+      jwt.sign(
         { _id: member._id },
         process.env.SECRET_KEY,
         { expiresIn: 1100011 },
@@ -143,62 +142,10 @@ router.get("/load", authUser, (req, res) => {
           });
         }
       );
-  })
-  .catch((err) => {
-    return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-  });
-});
-
-// v1/users/project
-// Create Project
-// Public
-router.post("/project", authUser, (req, res) => {
-  console.log("v1/users/project METHOD : POST");
-  const _id = ObjectId();
-  const userid = req.user;
-  var { project_title,project_deadline, theme_colour } = req.body;
-  console.log(project_title);
-  console.log(userid)
-  if(project_title==null || project_title ==""){
-    return res.status(400).json({ msg: "PROJECT_TITLE_REQUIRED" });
-  }
-  else{
-    const newproject = { project_title , _id , project_deadline, theme_colour, "total_tasks":0, "total_completed_tasks":0 };
-    User.updateOne({ _id: userid }, { $push: { projects: newproject } })
-    .then((result) => {
-      res.status(200).json(newproject);
     })
     .catch((err) => {
-      console.log(err);
       return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
     });
-  }
-
 });
-
-
-// v1/users/project
-// Fetch All Project
-// Private 
-router.get("/project", authUser, (req, res) => {
-  console.log("v1/users/ METHOD : Project");
-  const userid = req.user;
-
-  User.findOne(
-    { _id: userid },
-    function (err, result) {
-      if (err) {
-        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-      }
-
-      if (result) {
-        const projectList = result.projects;
-        return res.status(200).json([...projectList]);
-      }
-    }
-  );
-});
-
-
 
 module.exports = router;
