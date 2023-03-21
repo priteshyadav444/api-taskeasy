@@ -15,7 +15,7 @@ const UserScheme = new Schema(
         project_deadline: { type: Date, default: null },
         total_tasks: { type: Number, default: 0 },
         total_completed_tasks: { type: Number, default: 0 },
-        theme_colour :{ type:String, default: "#D2DAFF"},
+        theme_colour: { type: String, default: "#D2DAFF" },
         tasks: [
           {
             title: { type: String, required: true },
@@ -24,8 +24,8 @@ const UserScheme = new Schema(
             task_status: { type: String, required: true, default: "pending" },
             category: { type: String, default: "None" },
             badge: { type: String, default: "low" },
-            scheduled_date: { type: Date, default: Date.now() },
-            theme_colour :{ type:String, default: "#D2DAFF"},
+            scheduled_date: { type: Date, default: null },
+            theme_colour: { type: String, default: "#D2DAFF" },
             subtasklist: [
               {
                 stitle: { type: String, required: true },
@@ -34,8 +34,8 @@ const UserScheme = new Schema(
             ],
             createdAt: { type: Date, default: Date.now() },
             updatedAt: { type: Date, default: Date.now() },
-            completedAt: { type: Date, default:null },
-            startedAt: { type: Date, default:null },
+            completedAt: { type: Date, default: null },
+            startedAt: { type: Date, default: null },
           },
         ],
         createdAt: { type: Date, default: Date.now() },

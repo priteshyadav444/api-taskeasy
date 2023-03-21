@@ -67,8 +67,7 @@ router.post("/:id", authUser, function (req, res) {
     .then((result) => {
       const createdAt = new Date();
       const updatedAt = new Date();
-      const startedAt = new Date();
-      newTask = { ...newTask, createdAt, updatedAt, startedAt };
+      newTask = { ...newTask, createdAt, updatedAt };
       res.status(200).json(newTask);
     })
     .catch((err) => {
