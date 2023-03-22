@@ -8,7 +8,6 @@ var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
 
-
 // v1/projects (get)
 // Fetch All Project
 // Private
@@ -35,7 +34,13 @@ router.post("/", authUser, (req, res) => {
   console.log("v1/project METHOD : POST");
   const _id = ObjectId();
   const userid = req.user;
-  var { project_title, project_deadline, theme_colour,project_start } = req.body;
+  var { project_title, project_deadline, theme_colour, project_start } =
+    req.body;
+
+  if (project_start == null || project_start == "") {
+    project_start = new Date();
+  }
+  
   if (project_title == null || project_title == "") {
     return res.status(400).json({ msg: "PROJECT_TITLE_REQUIRED" });
   } else {
@@ -71,7 +76,12 @@ router.put("/:projectId", authUser, (req, res) => {
   if (!projectId) {
     return res.status(404).json({ msg: "PROJECT_NOT_FOUND" });
   }
-  if((project_deadline == null || project_deadline == "") || (theme_colour == null || theme_colour == "")){
+  if (
+    project_deadline == null ||
+    project_deadline == "" ||
+    theme_colour == null ||
+    theme_colour == ""
+  ) {
     return res.status(400).json({ msg: "ALL_FIELD_REQUIRED" });
   }
   if (project_title == null || project_title == "") {
@@ -89,7 +99,9 @@ router.put("/:projectId", authUser, (req, res) => {
       { new: true }
     )
       .then((user) => {
-        const project = user.projects.find((p) => p._id.toString() === projectId);
+        const project = user.projects.find(
+          (p) => p._id.toString() === projectId
+        );
         if (!project) {
           return res.status(404).json({ msg: "PROJECT_NOT_FOUND" });
         }
@@ -117,7 +129,6 @@ router.delete("/:pid", authUser, (req, res) => {
       $pull: { projects: { _id: projetid } },
     },
     function (err, result) {
-      console.log(result);
       if (err) {
         return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
       } else {
