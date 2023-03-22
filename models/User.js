@@ -12,6 +12,7 @@ const UserScheme = new Schema(
     projects: [
       {
         project_title: { type: String, required: true },
+        project_start: { type: Date, default: Date.now() },
         project_deadline: { type: Date, default: null },
         total_tasks: { type: Number, default: 0 },
         total_completed_tasks: { type: Number, default: 0 },

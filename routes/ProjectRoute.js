@@ -35,8 +35,7 @@ router.post("/", authUser, (req, res) => {
   console.log("v1/project METHOD : POST");
   const _id = ObjectId();
   const userid = req.user;
-  var { project_title, project_deadline, theme_colour } = req.body;
-  
+  var { project_title, project_deadline, theme_colour,project_start } = req.body;
   if (project_title == null || project_title == "") {
     return res.status(400).json({ msg: "PROJECT_TITLE_REQUIRED" });
   } else {
@@ -44,6 +43,7 @@ router.post("/", authUser, (req, res) => {
       project_title,
       _id,
       project_deadline,
+      project_start,
       theme_colour,
       total_tasks: 0,
       total_completed_tasks: 0,
