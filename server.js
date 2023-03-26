@@ -11,6 +11,8 @@ const PORT = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+process.env.TZ = 'UTC';
+
 
 // configuring request limit is 25mb
 app.use(bodyParser.json({ limit: "25mb" }));
@@ -49,6 +51,7 @@ mongoose
   .catch((err) => console.log(err.message));
 
 try {
+  console.log(new Date().toString())
   app.listen(PORT, () => console.log(`Server Running At ${PORT}`));
 } catch (error) {
   console.log(error);
