@@ -19,8 +19,9 @@ const UserScheme = new Schema(
         project_start: { type: Date, default: Date.now() },
         project_deadline: { type: Date, default: null },
         startedAt: { type: Date, default: null },
-        updatedAt: { type: Date, default: Date.now() },
         completedAt: { type: Date, default: null },
+        createdAt: { type: Date, default: Date.now() },
+        updatedAt: { type: Date, default: Date.now() },
 
         tasks: [
           {
@@ -39,8 +40,6 @@ const UserScheme = new Schema(
             ],
           },
         ],
-        createdAt: { type: Date, default: Date.now() },
-        updatedAt: { type: Date, default: Date.now() },
       },
     ],
   },
