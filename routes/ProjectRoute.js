@@ -149,7 +149,7 @@ router.post(
 const validateProjectExistence = (req, res, next) => {
   const userId = req.user;
   const projectId = req.params.projectId;
- 
+
   User.findOne(
     {
       _id: userId,
@@ -237,7 +237,7 @@ router.put(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
+    const updatedAt = moment.utc();
     User.findOneAndUpdate(
       { _id: userid, "projects._id": projectId },
       {
@@ -245,6 +245,7 @@ router.put(
           "projects.$.project_title": project_title,
           "projects.$.project_deadline": project_deadline,
           "projects.$.theme_colour": theme_colour,
+          "projects.$.updatedAt": updatedAt,
         },
       },
       { new: true }
