@@ -12,10 +12,8 @@ router.post("/:id", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : POST");
   const _id = ObjectId().toHexString();
   var {
-    pid,
     title,
     description,
-    category,
     badge,
     scheduled_date,
     completed,
@@ -23,6 +21,7 @@ router.post("/:id", authUser, function (req, res) {
     theme_colour,
     task_status,
   } = req.body;
+
   const userid = req.user;
   const projectid = req.params.id;
 
@@ -42,7 +41,6 @@ router.post("/:id", authUser, function (req, res) {
   let newTask = {
     title,
     description,
-    category,
     scheduled_date,
     completed,
     subtasklist,
@@ -108,7 +106,6 @@ router.get("/:id", authUser, (req, res) => {
 // v1/tasks/
 // Update
 // Auth Required Update
-
 router.put("/update/:pid", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
@@ -120,7 +117,7 @@ router.put("/update/:pid", authUser, function (req, res) {
   }
 
   if (data.task_status == "done") {
-    isTaskCompleted = 1;
+    if (data.completed != undefined) isTaskCompleted = 1;
 
     if (data.startedAt == null) {
       data = { ...data, startedAt: new Date() };
@@ -179,23 +176,43 @@ router.delete("/:pid/:id", authUser, (req, res) => {
   const userid = req.user;
   const taskid = req.params.id;
   const projectid = req.params.pid;
-
-  User.updateOne(
+  // Finding the project containing the task to be deleted
+  User.findOne(
     { _id: userid, "projects._id": projectid },
-    {
-      $inc: {
-        "projects.$.total_tasks": -1,
-      },
-      $pull: { "projects.$.tasks": { _id: taskid } },
-    },
-    function (err, result) {
-      console.log(err);
+    function (err, user) {
       if (err) {
         return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-      } else {
-        return res
-          .status(200)
-          .json({ msg: "TASK_DELETED_SUCCESS", data: result });
+      }
+
+      // Find the task to be deleted within the project
+      const project = user.projects.find((project) => project._id == projectid);
+      const task = project.tasks.find((task) => task._id == taskid);
+
+      if (!task) {
+        return res.status(400).json({ msg: "TASK_NOT_FOUND" });
+      }
+      // Remove the task from the project's task list
+      else {
+        User.updateOne(
+          { _id: userid, "projects._id": projectid },
+          {
+            $inc: {
+              "projects.$.total_tasks": -1,
+            },
+            $pull: { "projects.$.tasks": { _id: taskid } },
+            $push: { "projects.$.deleted_tasks": task },
+          },
+          function (err, result) {
+            console.log(err);
+            if (err) {
+              return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+            } else {
+              return res
+                .status(200)
+                .json({ msg: "TASK_DELETED_SUCCESS", data: result });
+            }
+          }
+        );
       }
     }
   );

@@ -80,7 +80,6 @@ router.post("/signin", (req, res) => {
 
   const { email, password } = req.body;
 
-  console.log(clientIp);
   if (!email || !password) {
     return res.status(400).json({ msg: "ALL_FIELD_REQUIRED" });
   }
