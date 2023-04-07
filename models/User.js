@@ -40,6 +40,24 @@ const UserScheme = new Schema(
             ],
           },
         ],
+        deleted_tasks: [
+          {
+            title: { type: String, required: true },
+            completed: { type: Boolean, default: false },
+            description: { type: String, default: null },
+            task_status: { type: String, required: true, default: "pending" },
+            badge: { type: String, default: "low" },
+            scheduled_date: { type: Date, default: null },
+            theme_colour: { type: String, default: "#D2DAFF" },
+            subtasklist: [
+              {
+                stitle: { type: String, required: true },
+                checked: { type: Boolean, default: false },
+              },
+            ],
+            deletedAt: { type: Date, default: Date.now() },
+          },
+        ],
       },
     ],
   },
