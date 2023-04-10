@@ -4,76 +4,163 @@ var router = express.Router();
 require("dotenv").config();
 const { ObjectId } = require("bson");
 const authUser = require("../middleware/authUser");
+const { body, validationResult } = require("express-validator");
+const moment = require("moment");
+
+const isSubtaskArray = (value) => {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+  return value.every((subtask) => {
+    return (
+      typeof subtask === "object" &&
+      subtask !== null &&
+      typeof subtask.stitle === "string" &&
+      typeof subtask.checked === "boolean"
+    );
+  });
+};
 
 // v1/tasks
 // Create Task
 // Auth Required
-router.post("/:id", authUser, function (req, res) {
-  console.log("v1/tasks/ METHOD : POST");
-  const _id = ObjectId().toHexString();
-  var {
-    pid,
-    title,
-    description,
-    category,
-    badge,
-    scheduled_date,
-    completed,
-    subtasklist,
-    theme_colour,
-    task_status,
-  } = req.body;
-  const userid = req.user;
-  const projectid = req.params.id;
+router.post(
+  "/:id",
+  authUser,
+  [
+    body("title")
+      .notEmpty()
+      .withMessage("TITLE_REQUIRED")
+      .bail()
+      .customSanitizer((value) => value.trim())
+      .isLength({ max: 50 })
+      .withMessage("TASK_TITLE_TOO_LONG")
+      .bail()
+      .notEmpty()
+      .withMessage("TITLE_REQUIRED")
+      .bail(),
+    body("createdAt")
+      .if(body("createdAt").notEmpty())
+      .custom((value, { req }) => {
+        const startedAtDate = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
+        if (!startedAtDate.isValid()) {
+          throw new Error("INVALID_DATE_FORMAT");
+        }
+        return true;
+      }),
+    body("scheduled_date")
+      .if(body("scheduled_date").notEmpty())
+      .custom((value, { req }) => {
+        const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
+        if (!deadline.isValid()) {
+          throw new Error("INVALID_DATE_FORMAT");
+        }
 
-  if (scheduled_date == null || scheduled_date == "") {
-    scheduled_type = "unscheduled_task";
-  } else {
-    scheduled_type = "scheduled_task";
-  }
+        const deadlineWithoutOffset = moment.utc(
+          deadline.format("YYYY-MM-DDTHH:mm:ss.SSS")
+        ); // remove timezone offset
+        if (
+          req.body.createdAt == undefined ||
+          req.body.createdAt == null ||
+          req.body.createdAt == ""
+        ) {
+          req.body.createdAt = moment.utc();
+        }
 
-  // if(new Date(scheduled_date) < new Date()){
-  //   return res.status(400).json({ msg: "DATE_INVALID" });
-  // }
+        let start = moment.utc(req.body.createdAt);
 
-  if (!title) {
-    return res.status(400).json({ msg: "TITLE_REQUIRED" });
-  }
-  let newTask = {
-    title,
-    description,
-    category,
-    scheduled_date,
-    completed,
-    subtasklist,
-    badge,
-    task_status,
-    theme_colour,
-    _id,
-  };
-  console.log(newTask);
-  User.findOneAndUpdate(
-    { _id: userid, "projects._id": projectid },
-    {
-      $push: {
-        "projects.$.tasks": newTask,
+        if (deadlineWithoutOffset.isBefore(start)) {
+          throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
+        }
+
+        return true;
+      }),
+    body("theme_colour")
+      .if(body("theme_colour").notEmpty())
+      .optional({ nullable: true })
+      .isHexColor()
+      .withMessage("INVALID_THEME_COLOUR"),
+    body("badge")
+      .if(body("badge").notEmpty())
+      .optional({ nullable: true })
+      .isIn(["low", "medium", "high", "none"])
+      .withMessage("INVALID_BADGE_VALUE"),
+    body("subtasklist")
+      .optional({ nullable: true })
+      .custom(isSubtaskArray)
+      .withMessage("INVALID_SUBTASK_LIST"),
+    body("description").optional(),
+  ],
+  function (req, res) {
+    console.log("v1/tasks/ METHOD : POST");
+    const _id = ObjectId().toHexString();
+    var {
+      title,
+      description,
+      badge,
+      scheduled_date,
+      completed,
+      subtasklist,
+      theme_colour,
+      task_status,
+      createdAt,
+    } = req.body;
+
+    const userid = req.user;
+    const projectid = req.params.id;
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    if (createdAt == undefined || createdAt == null || createdAt == "") {
+      createdAt = moment.utc();
+    }
+
+    const updatedAt = moment.utc();
+
+    let newTask = {
+      title,
+      description,
+      scheduled_date,
+      completed,
+      subtasklist,
+      badge,
+      task_status,
+      theme_colour,
+      updatedAt,
+      createdAt,
+      _id,
+    };
+
+    User.findOneAndUpdate(
+      { _id: userid, "projects._id": projectid },
+      {
+        $push: {
+          "projects.$.tasks": newTask,
+        },
       },
-      $inc: {
-        "projects.$.total_tasks": 1,
-      },
-    },
-    { new: true }
-  )
-    .then((result) => {
-      const createdAt = new Date();
-      const updatedAt = new Date();
-      newTask = { ...newTask, createdAt, updatedAt };
-      res.status(200).json(newTask);
-    })
-    .catch((err) => {
-      res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-    });
-});
+      { new: true }
+    )
+      .then((result) => {
+        console.log(newTask);
+        res.status(200).json(newTask);
+      })
+      .catch((err) => {
+        const error = {
+          errors: [
+            {
+              msg: "SOMETHING_WENT_WRONG",
+              errorDetails: err,
+            },
+          ],
+        };
+        res.status(400).json(error);
+      });
+  }
+);
 
 // v1/tasks
 // Get All  Task
@@ -108,7 +195,6 @@ router.get("/:id", authUser, (req, res) => {
 // v1/tasks/
 // Update
 // Auth Required Update
-
 router.put("/update/:pid", authUser, function (req, res) {
   console.log("v1/tasks/ METHOD : UPDATE");
   const userid = req.user;
@@ -120,7 +206,7 @@ router.put("/update/:pid", authUser, function (req, res) {
   }
 
   if (data.task_status == "done") {
-    isTaskCompleted = 1;
+    if (data.completed != undefined) isTaskCompleted = 1;
 
     if (data.startedAt == null) {
       data = { ...data, startedAt: new Date() };
@@ -179,23 +265,43 @@ router.delete("/:pid/:id", authUser, (req, res) => {
   const userid = req.user;
   const taskid = req.params.id;
   const projectid = req.params.pid;
-
-  User.updateOne(
+  // Finding the project containing the task to be deleted
+  User.findOne(
     { _id: userid, "projects._id": projectid },
-    {
-      $inc: {
-        "projects.$.total_tasks": -1,
-      },
-      $pull: { "projects.$.tasks": { _id: taskid } },
-    },
-    function (err, result) {
-      console.log(err);
+    function (err, user) {
       if (err) {
         return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
-      } else {
-        return res
-          .status(200)
-          .json({ msg: "TASK_DELETED_SUCCESS", data: result });
+      }
+
+      // Find the task to be deleted within the project
+      const project = user.projects.find((project) => project._id == projectid);
+      const task = project.tasks.find((task) => task._id == taskid);
+
+      if (!task) {
+        return res.status(400).json({ msg: "TASK_NOT_FOUND" });
+      }
+      // Remove the task from the project's task list
+      else {
+        User.updateOne(
+          { _id: userid, "projects._id": projectid },
+          {
+            $inc: {
+              "projects.$.total_tasks": -1,
+            },
+            $pull: { "projects.$.tasks": { _id: taskid } },
+            $push: { "projects.$.deleted_tasks": task },
+          },
+          function (err, result) {
+            console.log(err);
+            if (err) {
+              return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+            } else {
+              return res
+                .status(200)
+                .json({ msg: "TASK_DELETED_SUCCESS", data: result });
+            }
+          }
+        );
       }
     }
   );
