@@ -145,8 +145,7 @@ router.post(
       { new: true }
     )
       .then((result) => {
-        console.log(newTask);
-        res.status(200).json(newTask);
+        return res.status(200).json(newTask);
       })
       .catch((err) => {
         const error = {
@@ -157,7 +156,7 @@ router.post(
             },
           ],
         };
-        res.status(400).json(error);
+        return res.status(400).json(error);
       });
   }
 );
@@ -169,12 +168,21 @@ router.get("/:id", authUser, (req, res) => {
   console.log("v1/tasks/ METHOD : GET");
   const userid = req.user;
   const projectid = req.params.id;
+
   User.findOne(
     { _id: userid, "projects._id": projectid },
     { "projects.$": 1 },
     function (err, result) {
       if (err) {
-        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+        const error = {
+          errors: [
+            {
+              msg: "SOMETHING_WENT_WRONG",
+              errorDetails: err,
+            },
+          ],
+        };
+        return res.status(400).json(error);
       }
 
       if (result) {
@@ -193,68 +201,149 @@ router.get("/:id", authUser, (req, res) => {
 });
 
 // v1/tasks/
-// Update
+// Update Task
 // Auth Required Update
-router.put("/update/:pid", authUser, function (req, res) {
-  console.log("v1/tasks/ METHOD : UPDATE");
-  const userid = req.user;
-  var data = { ...req.body, updatedAt: new Date() };
-  var isTaskCompleted = 0;
+router.put(
+  "/update/:pid",
+  authUser,
+  [
+    body("title")
+      .notEmpty()
+      .withMessage("TITLE_REQUIRED")
+      .bail()
+      .customSanitizer((value) => value.trim())
+      .isLength({ max: 50 })
+      .withMessage("TASK_TITLE_TOO_LONG")
+      .bail()
+      .notEmpty()
+      .withMessage("TITLE_REQUIRED")
+      .bail(),
+    body("createdAt")
+      .if(body("createdAt").notEmpty())
+      .custom((value, { req }) => {
+        const startedAtDate = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
+        if (!startedAtDate.isValid()) {
+          throw new Error("INVALID_DATE_FORMAT");
+        }
+        return true;
+      }),
+    body("scheduled_date")
+      .if(body("scheduled_date").notEmpty())
+      .custom((value, { req }) => {
+        const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
 
-  if (data.task_status == "active" && data.startedAt == null) {
-    data = { ...req.body, startedAt: new Date() };
-  }
+        if (!deadline.isValid()) {
+          throw new Error("INVALID_DATE_FORMAT");
+        }
 
-  if (data.task_status == "done") {
-    if (data.completed != undefined) isTaskCompleted = 1;
+        const deadlineWithoutOffset = moment.utc(
+          deadline.format("YYYY-MM-DDTHH:mm:ss.SSS")
+        ); // remove timezone offset
 
-    if (data.startedAt == null) {
-      data = { ...data, startedAt: new Date() };
+        if (
+          req.body.createdAt == undefined ||
+          req.body.createdAt == null ||
+          req.body.createdAt == ""
+        ) {
+          req.body.createdAt = moment.utc();
+        }
+
+        let start = moment.utc(req.body.createdAt);
+
+        if (deadlineWithoutOffset.isBefore(start)) {
+          throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
+        }
+
+        return true;
+      }),
+    body("theme_colour")
+      .if(body("theme_colour").notEmpty())
+      .optional({ nullable: true })
+      .isHexColor()
+      .withMessage("INVALID_THEME_COLOUR"),
+    body("badge")
+      .if(body("badge").notEmpty())
+      .optional({ nullable: true })
+      .isIn(["low", "medium", "high", "none"])
+      .withMessage("INVALID_BADGE_VALUE"),
+    body("subtasklist")
+      .optional({ nullable: true })
+      .custom(isSubtaskArray)
+      .withMessage("INVALID_SUBTASK_LIST"),
+    body("description").optional(),
+  ],
+  function (req, res) {
+    console.log("v1/tasks/ METHOD : UPDATE");
+    const userid = req.user;
+    const updatedAt = moment.utc();
+
+    var updatedTask = { ...req.body, updatedAt };
+
+    if (updatedTask.task_status == "active" && updatedTask.startedAt == null) {
+      updatedTask = { ...req.body, startedAt: new Date() };
     }
-    data = { ...data, completedAt: new Date() };
-  }
 
-  const projectid = req.params.pid;
-  User.updateOne(
-    {
-      _id: userid,
-    },
-    {
-      $set: {
-        "projects.$[pid].tasks.$[tid]": data,
-      },
-      $inc: {
-        "projects.$[pid].total_completed_tasks": isTaskCompleted,
-      },
-    },
-    {
-      multi: false,
-      upsert: false,
-      arrayFilters: [
-        {
-          "pid._id": {
-            $eq: projectid,
-          },
-        },
-        {
-          "tid._id": {
-            $eq: data._id,
-          },
-        },
-      ],
-    },
-    function (err, result) {
-      if (err) {
-        console.log(err);
-        return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+    if (updatedTask.task_status == "done") {
+      if (updatedTask.startedAt == null) {
+        updatedTask = { ...updatedTask, startedAt: new Date() };
       }
-
-      if (result) {
-        return res.status(200).json({ msg: "SUCCESS" });
-      }
+      updatedTask = { ...updatedTask, completedAt: new Date() };
     }
-  );
-});
+
+    const projectid = req.params.pid;
+    User.updateOne(
+      {
+        _id: userid,
+      },
+      {
+        $set: {
+          "projects.$[pid].tasks.$[tid]": updatedTask,
+        },
+      },
+      {
+        multi: false,
+        upsert: false,
+        arrayFilters: [
+          {
+            "pid._id": {
+              $eq: projectid,
+            },
+          },
+          {
+            "tid._id": {
+              $eq: updatedTask._id,
+            },
+          },
+        ],
+      },
+      function (err, result) {
+        if (err) {
+          const error = {
+            errors: [
+              {
+                msg: "SOMETHING_WENT_WRONG",
+                errorDetails: err,
+              },
+            ],
+          };
+          return res.status(400).json(error);
+        }
+
+        if (result) {
+          const payload = {
+            success: [
+              {
+                msg: "TASK_DELETED_SUCCESS",
+                result: updatedTask,
+              },
+            ],
+          };
+          return res.status(200).json(payload);
+        }
+      }
+    );
+  }
+);
 
 // v1/tasks
 // Delete Tasks
@@ -270,7 +359,26 @@ router.delete("/:pid/:id", authUser, (req, res) => {
     { _id: userid, "projects._id": projectid },
     function (err, user) {
       if (err) {
-        return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+        const error = {
+          errors: [
+            {
+              msg: "SOMETHING_WENT_WRONG",
+              errorDetails: err,
+            },
+          ],
+        };
+        return res.status(400).json(error);
+      }
+      if (!user) {
+        const error = {
+          errors: [
+            {
+              msg: "DATA_NOT_FOUND",
+              errorDetails: err,
+            },
+          ],
+        };
+        return res.status(404).json(error);
       }
 
       // Find the task to be deleted within the project
@@ -278,27 +386,46 @@ router.delete("/:pid/:id", authUser, (req, res) => {
       const task = project.tasks.find((task) => task._id == taskid);
 
       if (!task) {
-        return res.status(400).json({ msg: "TASK_NOT_FOUND" });
+        const error = {
+          errors: [
+            {
+              msg: "TASK_NOT_FOUND",
+              errorDetails: err,
+            },
+          ],
+        };
+        return res.status(400).json(error);
       }
       // Remove the task from the project's task list
       else {
         User.updateOne(
           { _id: userid, "projects._id": projectid },
           {
-            $inc: {
-              "projects.$.total_tasks": -1,
-            },
             $pull: { "projects.$.tasks": { _id: taskid } },
             $push: { "projects.$.deleted_tasks": task },
           },
           function (err, result) {
             console.log(err);
             if (err) {
-              return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+              const error = {
+                errors: [
+                  {
+                    msg: "SOMETHING_WENT_WRONG",
+                    errorDetails: err,
+                  },
+                ],
+              };
+              return res.status(400).json(error);
             } else {
-              return res
-                .status(200)
-                .json({ msg: "TASK_DELETED_SUCCESS", data: result });
+              const payload = {
+                success: [
+                  {
+                    msg: "TASK_DELETED_SUCCESS",
+                    result: { _id: taskid },
+                  },
+                ],
+              };
+              return res.status(200).json(payload);
             }
           }
         );
@@ -317,7 +444,15 @@ router.get("/calender/all/", authUser, (req, res) => {
   const pid = req.params.pid;
   User.findOne({ _id: userid }, function (err, result) {
     if (err) {
-      res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      const error = {
+        errors: [
+          {
+            msg: "SOMETHING_WENT_WRONG",
+            errorDetails: err,
+          },
+        ],
+      };
+      return res.status(400).json(error);
     }
     var arr1 = [];
     if (result) {
@@ -350,7 +485,15 @@ router.get("/calender/:pid/", authUser, (req, res) => {
     { "projects.$": 1 },
     function (err, result) {
       if (err) {
-        res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+        const error = {
+          errors: [
+            {
+              msg: "SOMETHING_WENT_WRONG",
+              errorDetails: err,
+            },
+          ],
+        };
+        return res.status(400).json(error);
       }
 
       if (result) {
