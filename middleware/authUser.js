@@ -27,7 +27,29 @@ function authUser(req, res, next) {
     next();
   } catch (error) {
     console.log(error);
-    res.status(400).json({ msg: "INVALID_TOKEN" });
+    let errorCode = "";
+
+    if (err instanceof TokenExpiredError) {
+      const errorPayload = {
+        errors: [
+          {
+            msg: "TOKEN_EXPIRED",
+            errorDetails: err,
+          },
+        ],
+      };
+      res.status(400).json(errorPayload);
+    } else {
+      const errorPayload = {
+        errors: [
+          {
+            msg: "INVALID_TOKEN",
+            errorDetails: err,
+          },
+        ],
+      };
+      res.status(400).json(errorPayload);
+    }
   }
 }
 
