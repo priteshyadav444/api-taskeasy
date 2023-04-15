@@ -7,7 +7,7 @@ const bcrypt = require("bcryptjs");
 var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
-const { body, validationResult } = require("express-validator");
+const { body, validationResult, sanitizeBody } = require("express-validator");
 const {
   getErrorPayload,
   getSuccessPayload,
@@ -28,10 +28,13 @@ router.post(
     .withMessage("Last name must be between 1 and 30 characters"),
   body("password")
     .isLength({ min: 8, max: 40 })
+    .withMessage("Password must be between 8 and 40 characters")
     .matches(
       /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{"':;?/>.<,])(?!.*\s).*$/
     )
-    .withMessage("Password must be between 8 and 40 characters"),
+    .withMessage(
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+    ),
   body("email")
     .isEmail()
     .withMessage("Please enter a valid email address")
@@ -45,6 +48,12 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    // senitization of input
+    sanitizeBody("firstname").escape();
+    sanitizeBody("lastname").escape();
+    sanitizeBody("password").escape();
+    sanitizeBody("email").normalizeEmail();
+
     User.findOne({ email })
       .then((user) => {
         if (user) {
