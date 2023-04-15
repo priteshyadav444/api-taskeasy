@@ -6,6 +6,10 @@ const { ObjectId } = require("bson");
 const authUser = require("../middleware/authUser");
 const { body, validationResult } = require("express-validator");
 const moment = require("moment");
+const {
+  getErrorPayload,
+  getSuccessPayload,
+} = require("../shared/PayloadFormat");
 
 const isSubtaskArray = (value) => {
   if (!Array.isArray(value)) {
@@ -114,7 +118,7 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
+    // if createdAt (Task Start Date) is defined than set current date
     if (createdAt == undefined || createdAt == null || createdAt == "") {
       createdAt = moment.utc();
     }
@@ -134,7 +138,7 @@ router.post(
       createdAt,
       _id,
     };
-
+    console.log(newTask)
     User.findOneAndUpdate(
       { _id: userid, "projects._id": projectid },
       {
@@ -148,15 +152,9 @@ router.post(
         return res.status(200).json(newTask);
       })
       .catch((err) => {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
       });
   }
 );
@@ -174,15 +172,9 @@ router.get("/:id", authUser, (req, res) => {
     { "projects.$": 1 },
     function (err, result) {
       if (err) {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
       }
 
       if (result) {
@@ -317,28 +309,15 @@ router.put(
         ],
       },
       function (err, result) {
-        if (err) {
-          const error = {
-            errors: [
-              {
-                msg: "SOMETHING_WENT_WRONG",
-                errorDetails: err,
-              },
-            ],
-          };
-          return res.status(400).json(error);
-        }
+        if (err)
+          return res
+            .status(400)
+            .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
 
         if (result) {
-          const payload = {
-            success: [
-              {
-                msg: "TASK_DELETED_SUCCESS",
-                result: updatedTask,
-              },
-            ],
-          };
-          return res.status(200).json(payload);
+          return res
+            .status(200)
+            .json(getSuccessPayload("TASK_DELETED_SUCCESS", 200, updatedTask));
         }
       }
     );
@@ -359,26 +338,14 @@ router.delete("/:pid/:id", authUser, (req, res) => {
     { _id: userid, "projects._id": projectid },
     function (err, user) {
       if (err) {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
       }
       if (!user) {
-        const error = {
-          errors: [
-            {
-              msg: "DATA_NOT_FOUND",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(404).json(error);
+        return res
+          .status(404)
+          .json(getErrorPayload("DATA_NOT_FOUND", 404, err));
       }
 
       // Find the task to be deleted within the project
@@ -386,15 +353,9 @@ router.delete("/:pid/:id", authUser, (req, res) => {
       const task = project.tasks.find((task) => task._id == taskid);
 
       if (!task) {
-        const error = {
-          errors: [
-            {
-              msg: "TASK_NOT_FOUND",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(404)
+          .json(getErrorPayload("TASK_NOT_FOUND", 404, err));
       }
       // Remove the task from the project's task list
       else {
@@ -405,27 +366,18 @@ router.delete("/:pid/:id", authUser, (req, res) => {
             $push: { "projects.$.deleted_tasks": task },
           },
           function (err, result) {
-            console.log(err);
             if (err) {
-              const error = {
-                errors: [
-                  {
-                    msg: "SOMETHING_WENT_WRONG",
-                    errorDetails: err,
-                  },
-                ],
-              };
-              return res.status(400).json(error);
+              return res
+                .status(400)
+                .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
             } else {
-              const payload = {
-                success: [
-                  {
-                    msg: "TASK_DELETED_SUCCESS",
-                    result: { _id: taskid },
-                  },
-                ],
-              };
-              return res.status(200).json(payload);
+              return res
+                .status(200)
+                .json(
+                  getSuccessPayload("TASK_DELETED_SUCCESS", 200, {
+                    _id: taskid,
+                  })
+                );
             }
           }
         );

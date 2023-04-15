@@ -1,54 +1,27 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../models/User");
+const { getErrorPayload } = require("../shared/PayloadFormat");
 
 // user and token
 function authUser(req, res, next) {
   const token = req.header("x-auth-token");
-  if (!token) return res.status(401).json({ msg: "AUTH_DENAID" });
+  if (!token) return res.status(401).json(getErrorPayload("AUTH_DENAID", 401));
   try {
     //verify token
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded;
-    console.log(req.user);
     User.findOne({ _id: req.user }).then((member) => {
       if (!member) {
-        const error = {
-          errors: [
-            {
-              msg: "USER_NOT_EXISTS",
-              param: "_id",
-            },
-          ],
-        };
-        return res.status(404).json(error);
+        return res.status(404).json(getErrorPayload("USER_NOT_EXISTS", 404));
       }
     });
     next();
   } catch (error) {
-    console.log(error);
-    let errorCode = "";
-
-    if (err instanceof TokenExpiredError) {
-      const errorPayload = {
-        errors: [
-          {
-            msg: "TOKEN_EXPIRED",
-            errorDetails: err,
-          },
-        ],
-      };
-      res.status(400).json(errorPayload);
+    if (error instanceof TokenExpiredError) {
+      return res.status(400).json(getErrorPayload("TOKEN_EXPIRED", 400));
     } else {
-      const errorPayload = {
-        errors: [
-          {
-            msg: "INVALID_TOKEN",
-            errorDetails: err,
-          },
-        ],
-      };
-      res.status(400).json(errorPayload);
+      return res.status(400).json(getErrorPayload("INVALID_TOKEN", 400, error));
     }
   }
 }

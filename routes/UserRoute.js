@@ -8,6 +8,10 @@ var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
 const { body, validationResult } = require("express-validator");
+const {
+  getErrorPayload,
+  getSuccessPayload,
+} = require("../shared/PayloadFormat");
 
 // v1/users/signup
 // Create Account
@@ -17,12 +21,14 @@ router.post("/signup", function (req, res) {
   console.log("v1/users/signup METHOD : POST");
 
   if (!firstname || !lastname || !email || !password) {
-    return res.status(400).json({ msg: "ALL_FIELD_REQUIRED" });
+    return res.status(400).json(getErrorPayload("ALL_FIELD_REQUIRED", 400));
   }
   User.findOne({ email })
     .then((user) => {
       if (user) {
-        return res.status(400).json({ msg: "USER_EXISTS" });
+        return res
+          .status(400)
+          .json(getErrorPayload("EMAIL_ALREADY_REGISTERED", 400));
       } else {
         const newmember = new User({
           firstname,
@@ -59,16 +65,17 @@ router.post("/signup", function (req, res) {
                 );
               })
               .catch((err) => {
-                console.log(err);
-                return res.status(400).json({ msg: "SIGNUP_FAILED" });
+                return res
+                  .status(400)
+                  .json(getErrorPayload("SIGNUP_FAILED", 400));
               });
           });
         });
       }
     })
     .catch((err) => {
-      console.log(err);
-      if (err) return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      if (err)
+        res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
     });
 });
 
@@ -112,7 +119,7 @@ router.post("/signin", (req, res) => {
       });
     })
     .catch((err) => {
-      return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      return res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
     });
 });
 
@@ -144,7 +151,7 @@ router.get("/load", authUser, (req, res) => {
       );
     })
     .catch((err) => {
-      return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      return res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
     });
 });
 
@@ -178,29 +185,17 @@ router.put(
       .then((user) => {
         // If user not Found
         if (!user) {
-          const error = {
-            errors: [
-              {
-                msg: "USER_NOT_FOUND",
-                errorDetails: err,
-              },
-            ],
-          };
-          return res.status(400).json(error);
+          return res
+            .status(404)
+            .json(getErrorPayload("USER_NOT_FOUND", 404, error));
         } else {
           // If Email Passed for Update. than checking Is Already Exist In A System
           if (email && email !== user.email) {
             User.findOne({ email }).then((existingUser) => {
               if (existingUser) {
-                const error = {
-                  errors: [
-                    {
-                      msg: "EMAIL_ALREADY_REGISTERED",
-                      errorDetails: err,
-                    },
-                  ],
-                };
-                return res.status(400).json(error);
+                return res
+                  .status(400)
+                  .json(getErrorPayload("EMAIL_ALREADY_REGISTERED", 400));
               } else {
                 user.email = email;
               }
@@ -232,28 +227,16 @@ router.put(
               });
             })
             .catch((err) => {
-              const error = {
-                errors: [
-                  {
-                    msg: "PROFILE_UPDATE_FAILED",
-                    errorDetails: err,
-                  },
-                ],
-              };
-              return res.status(400).json(error);
+              return res
+                .status(400)
+                .json(getErrorPayload("PROFILE_UPDATE_FAILED", 400, err));
             });
         }
       })
       .catch((err) => {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
       });
   }
 );
@@ -266,20 +249,24 @@ router.put("/updatePassword", authUser, function (req, res) {
   console.log("v1/users/updatePassword METHOD : POST");
 
   if (!old_password || !new_password) {
-    return res.status(400).json({ msg: "OLD_AND_NEW_PASSWORD_REQUIRED" });
+    return res
+      .status(400)
+      .json(getErrorPayload("OLD_AND_NEW_PASSWORD_REQUIRED", 400));
   }
 
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        return res.status(400).json({ msg: "USER_NOT_FOUND" });
+        return res.status(404).json(getErrorPayload("USER_NOT_FOUND", 404));
       }
 
       bcrypt.compare(old_password, user.password, (err, isMatch) => {
         if (err) throw err;
 
         if (!isMatch) {
-          return res.status(400).json({ msg: "INVALID_OLD_PASSWORD" });
+          return res
+            .status(401)
+            .json(getErrorPayload("INVALID_OLD_PASSWORD", 401));
         }
 
         bcrypt.genSalt(10, (err, salt) => {
@@ -290,19 +277,24 @@ router.put("/updatePassword", authUser, function (req, res) {
             user
               .save()
               .then(() => {
-                res.status(200).json({ msg: "PASSWORD_UPDATED" });
+                return res
+                  .status(401)
+                  .json(getSuccessPayload("PASSWORD_UPDATED", 200));
               })
               .catch((err) => {
-                console.log(err);
-                return res.status(400).json({ msg: "PASSWORD_UPDATE_FAILED" });
+                return res
+                  .status(400)
+                  .json(getErrorPayload("PASSWORD_UPDATE_FAILED", 400, err));
               });
           });
         });
       });
     })
     .catch((err) => {
-      console.log(err);
-      if (err) return res.status(400).json({ msg: "SOMETHING_WENT_WRONG" });
+      if (err)
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
     });
 });
 

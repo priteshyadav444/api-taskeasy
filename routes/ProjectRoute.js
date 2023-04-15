@@ -6,25 +6,23 @@ const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
 const { body, param, validationResult } = require("express-validator");
 const moment = require("moment");
+const {
+  getErrorPayload,
+  getSuccessPayload,
+} = require("../shared/PayloadFormat");
 
 // v1/projects (get)
 // Fetch All Project
 // Private
-
 router.get("/", authUser, (req, res) => {
   console.log("v1/projects/ METHOD : (GET)");
   const userid = req.user;
 
   User.findOne({ _id: userid }, function (err, result) {
     if (err) {
-      const error = {
-        errors: [
-          {
-            msg: "SOMETHING_WENT_WRONG",
-          },
-        ],
-      };
-      res.status(400).json(error);
+      return res
+        .status(400)
+        .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
     }
 
     if (result) {
@@ -130,14 +128,9 @@ router.post(
         res.status(200).json(newproject);
       })
       .catch((err) => {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
       });
   }
 );
@@ -152,18 +145,11 @@ const validateProjectExistence = (req, res, next) => {
       _id: userId,
       "projects._id": projectId,
     },
-    (err, user) => {
-      if (!user) {
-        console.log("Project does not exist for user");
-        const error = {
-          errors: [
-            {
-              msg: "PROJECT_NOT_FOUND",
-              param: "_id",
-            },
-          ],
-        };
-        return res.status(404).json(error);
+    (err, result) => {
+      if (!result) {
+        return res
+          .status(404)
+          .json(getErrorPayload("PROJECT_NOT_FOUND", 404, err));
       }
       next();
     }
@@ -252,26 +238,16 @@ router.put(
           (p) => p._id.toString() === projectId
         );
         if (!project) {
-          const error = {
-            errors: [
-              {
-                msg: "PROJECT_NOT_FOUND",
-              },
-            ],
-          };
-          return res.status(404).json(error);
+          return res
+            .status(404)
+            .json(getErrorPayload("PROJECT_NOT_FOUND", 404, err));
         }
-        res.status(200).json(project);
+        return res.status(200).json(project);
       })
       .catch((err) => {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
       });
   }
 );
@@ -299,24 +275,15 @@ router.delete(
       },
       function (err, result) {
         if (err) {
-          const error = {
-            errors: [
-              {
-                msg: "SOMETHING_WENT_WRONG",
-              },
-            ],
-          };
-          return res.status(400).json(error);
+          return res
+            .status(400)
+            .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
         } else {
-          const message = {
-            errors: [
-              {
-                msg: "PROJECT_DELETED_SUCCESSFULLY",
-                status: 200,
-              },
-            ],
-          };
-          return res.status(200).json(message);
+          return res
+            .status(400)
+            .json(
+              getSuccessPayload("PROJECT_DELETED_SUCCESSFULLY", 200, message)
+            );
         }
       }
     );
