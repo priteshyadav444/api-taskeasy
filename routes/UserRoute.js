@@ -156,7 +156,7 @@ router.post("/signup", signupValidation, function (req, res) {
       if (err)
         return res
           .status(400)
-          .json(getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400));
+          .json(getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err));
     });
 });
 
@@ -295,8 +295,8 @@ router.put(
       const user = await User.findById(req.user._id);
       if (!user) {
         return res
-          .status(404)
-          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 404));
+          .status(401)
+          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
       }
 
       // If email is passed for update, check if it already exists in the system
@@ -359,61 +359,100 @@ router.put(
   }
 );
 
+const updatePasswordValidation = [
+  check("password")
+    .exists()
+    .withMessage("Old Password is required")
+    .trim()
+    .isLength({ min: 1, max: 40 })
+    .withMessage("Enter Valid Old Password"),
+  check("new_password")
+    .exists()
+    .withMessage("New Password is required")
+    .trim()
+    .isLength({ min: 1, max: 40 })
+    .withMessage("Enter Valid New Password"),
+  check("conform_password")
+    .exists()
+    .withMessage("Conform Password is required")
+    .trim()
+    .isLength({ min: 1, max: 40 })
+    .withMessage("Enter Valid Conform Password"),
+];
+
 // v1/users/passwordUpdate
 // Update User Profile
 // Private
-router.put("/updatePassword", authUser, function (req, res) {
-  const { old_password, new_password } = req.body;
-  console.log("v1/users/updatePassword METHOD : POST");
+router.put(
+  "/updatePassword",
+  authUser,
+  updatePasswordValidation,
+  async function (req, res) {
+    const { password, new_password, conform_password } = req.body;
+    console.log("v1/users/updatePassword METHOD : POST");
 
-  if (!old_password || !new_password) {
-    return res
-      .status(400)
-      .json(getErrorPayload("OLD_AND_NEW_PASSWORD_REQUIRED", 400));
-  }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  User.findById(req.user._id)
-    .then((user) => {
+    if (new_password !== conform_password) {
+      return res
+        .status(400)
+        .json(getErrorPayload("PASSWORD_MISMATCH", "Password Mismatch", 400));
+    }
+
+    if (new_password == password) {
+      return res
+        .status(400)
+        .json(
+          getErrorPayload(
+            "PASSWORD_SAME",
+            "Old Password and new Password Is Same",
+            400
+          )
+        );
+    }
+
+    try {
+      const user = await User.findOne({ _id: req.user });
       if (!user) {
-        return res.status(404).json(getErrorPayload("USER_NOT_FOUND", 404));
+        return res
+          .status(401)
+          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
       }
 
-      bcrypt.compare(old_password, user.password, (err, isMatch) => {
-        if (err) throw err;
-
-        if (!isMatch) {
-          return res
-            .status(401)
-            .json(getErrorPayload("INVALID_OLD_PASSWORD", 401));
-        }
-
-        bcrypt.genSalt(10, (err, salt) => {
-          bcrypt.hash(new_password, salt, (err, hash) => {
-            if (err) throw err;
-            user.password = hash;
-
-            user
-              .save()
-              .then(() => {
-                return res
-                  .status(401)
-                  .json(getSuccessPayload("PASSWORD_UPDATED", 200));
-              })
-              .catch((err) => {
-                return res
-                  .status(400)
-                  .json(getErrorPayload("PASSWORD_UPDATE_FAILED", 400, err));
-              });
-          });
-        });
-      });
-    })
-    .catch((err) => {
-      if (err)
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
         return res
-          .status(400)
-          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
-    });
-});
+          .status(401)
+          .json(
+            getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
+          );
+      }
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(new_password, salt);
+      user.password = hash;
+
+      await user.save();
+
+      return res
+        .status(200)
+        .json(
+          getSuccessPayload(
+            "PASSWORD_UPDATED",
+            "Password Updated Successfully",
+            200
+          )
+        );
+    } catch (error) {
+      return res
+        .status(400)
+        .json(
+          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+        );
+    }
+  }
+);
 
 module.exports = router;
