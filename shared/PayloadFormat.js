@@ -1,4 +1,5 @@
 const getErrorPayload = function getErrorPayload(
+  code,
   errorMessage,
   status_code,
   errorDetails = null
@@ -6,6 +7,7 @@ const getErrorPayload = function getErrorPayload(
   const payload = {
     errors: [
       {
+        error_code: code,
         msg: errorMessage,
         status_code,
         errorDetails,
