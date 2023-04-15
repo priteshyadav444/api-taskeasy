@@ -16,68 +16,97 @@ const {
 // v1/users/signup
 // Create Account
 // Public
-router.post("/signup", function (req, res) {
-  const { firstname, lastname, password, email } = req.body;
-  console.log("v1/users/signup METHOD : POST");
+router.post(
+  "/signup",
+  body("firstname")
+    .trim()
+    .isLength({ min: 1, max: 30 })
+    .withMessage("First name must be between 1 and 30 characters"),
+  body("lastname")
+    .trim()
+    .isLength({ min: 1, max: 30 })
+    .withMessage("Last name must be between 1 and 30 characters"),
+  body("password")
+    .isLength({ min: 8, max: 40 })
+    .matches(
+      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{"':;?/>.<,])(?!.*\s).*$/
+    )
+    .withMessage("Password must be between 8 and 40 characters"),
+  body("email")
+    .isEmail()
+    .withMessage("Please enter a valid email address")
+    .bail()
+    .customSanitizer((value) => value.toLowerCase()),
+  function (req, res) {
+    const { firstname, lastname, password, email } = req.body;
+    console.log("v1/users/signup METHOD : POST");
 
-  if (!firstname || !lastname || !email || !password) {
-    return res.status(400).json(getErrorPayload("ALL_FIELD_REQUIRED", 400));
-  }
-  User.findOne({ email })
-    .then((user) => {
-      if (user) {
-        return res
-          .status(400)
-          .json(getErrorPayload("EMAIL_ALREADY_REGISTERED", 400));
-      } else {
-        const newmember = new User({
-          firstname,
-          lastname,
-          email,
-          password,
-        });
-
-        //create salt & Hash
-        bcrypt.genSalt(10, (err, salt) => {
-          bcrypt.hash(newmember.password, salt, (err, hash) => {
-            if (err) throw err;
-            newmember.password = hash;
-
-            newmember
-              .save()
-              .then((member) => {
-                jwt.sign(
-                  { _id: member._id },
-                  process.env.SECRET_KEY,
-                  { expiresIn: 1455555 },
-                  (err, authToken) => {
-                    if (err) throw err;
-                    res.status(200).json({
-                      authToken,
-                      user: {
-                        _id: member._id,
-                        firstname: member.firstname,
-                        lastname: member.lastname,
-                        email: member.email,
-                      },
-                    });
-                  }
-                );
-              })
-              .catch((err) => {
-                return res
-                  .status(400)
-                  .json(getErrorPayload("SIGNUP_FAILED", 400));
-              });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    User.findOne({ email })
+      .then((user) => {
+        if (user) {
+          return res
+            .status(409)
+            .json(
+              getErrorPayload(
+                "EMAIL_ALREADY_REGISTERED",
+                "User Already Exist",
+                409
+              )
+            );
+        } else {
+          const newmember = new User({
+            firstname,
+            lastname,
+            email,
+            password,
           });
-        });
-      }
-    })
-    .catch((err) => {
-      if (err)
-        res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
-    });
-});
+
+          //create salt & Hash
+          bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(newmember.password, salt, (err, hash) => {
+              if (err) throw err;
+              newmember.password = hash;
+
+              newmember
+                .save()
+                .then((member) => {
+                  jwt.sign(
+                    { _id: member._id },
+                    process.env.SECRET_KEY,
+                    { expiresIn: 1455555 },
+                    (err, authToken) => {
+                      if (err) throw err;
+                      res.status(200).json({
+                        authToken,
+                        user: {
+                          _id: member._id,
+                          firstname: member.firstname,
+                          lastname: member.lastname,
+                          email: member.email,
+                        },
+                      });
+                    }
+                  );
+                })
+                .catch((err) => {
+                  return res
+                    .status(400)
+                    .json(getErrorPayload("SIGNUP_FAILED", 400));
+                });
+            });
+          });
+        }
+      })
+      .catch((err) => {
+        if (err)
+          res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
+      });
+  }
+);
 
 // v1/users/signin
 // Login Account
