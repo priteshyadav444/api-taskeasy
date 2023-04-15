@@ -7,7 +7,12 @@ const bcrypt = require("bcryptjs");
 var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
-const { body, validationResult, sanitizeBody, check } = require("express-validator");
+const {
+  body,
+  validationResult,
+  sanitizeBody,
+  check,
+} = require("express-validator");
 const {
   getErrorPayload,
   getSuccessPayload,
@@ -155,48 +160,73 @@ router.post("/signup", signupValidation, function (req, res) {
     });
 });
 
+const signinValidation = [
+  ...emailValidation,
+  check("password")
+    .exists()
+    .withMessage("Password is required")
+    .trim()
+    .isLength({ min: 1, max: 40 })
+    .withMessage("Enter Valid Password"),
+];
 // v1/users/signin
 // Login Account
 // Public
-router.post("/signin", (req, res) => {
+router.post("/signin", signinValidation, async (req, res) => {
   var clientIp = requestIp.getClientIp(req);
   console.log("v1/users/signin METHOD : POST  " + clientIp);
 
   const { email, password } = req.body;
+  // senitization of input
+  check("email").normalizeEmail();
+  check("password").escape();
 
-  if (!email || !password) {
-    return res.status(400).json({ msg: "ALL_FIELD_REQUIRED" });
-  }
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  User.findOne({ email })
-    .then((member) => {
-      if (!member) return res.status(400).json({ msg: "USER_NOT_EXISTS" });
-      console.log(email);
-      bcrypt.compare(password, member.password).then((isMatch) => {
-        if (!isMatch) return res.status(400).json({ msg: "WRONG_PASSWORD" });
-
-        jwt.sign(
-          { _id: member._id },
-          process.env.SECRET_KEY,
-          { expiresIn: 1100011 },
-          (err, authToken) => {
-            if (err) throw err;
-            res.json({
-              authToken,
-              user: {
-                _id: member._id,
-                firstname: member.firstname,
-                lastname: member.lastname,
-                email: member.email,
-              },
-            });
-          }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(401)
+        .json(
+          getErrorPayload(
+            "INVALID_CREDENTIALS",
+            "Email ID Is Not Registered",
+            401
+          )
         );
-      });
-    })
-    .catch((err) => {
-      return res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json(
+          getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
+        );
+    }
+
+    const authToken = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+      expiresIn: 1100011,
     });
+
+    res.json({
+      authToken,
+      user: {
+        _id: user._id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .json(getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400));
+  }
 });
 
 // v1/users/load
