@@ -21,25 +21,32 @@ router.post(
   body("firstname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("First name must be between 1 and 30 characters"),
+    .withMessage("First name must be between 1 and 30 characters")
+    .bail(),
   body("lastname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("Last name must be between 1 and 30 characters"),
+    .withMessage("Last name must be between 1 and 30 characters")
+    .bail(),
   body("password")
     .isLength({ min: 8, max: 40 })
     .withMessage("Password must be between 8 and 40 characters")
+    .bail()
     .matches(
       /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{"':;?/>.<,])(?!.*\s).*$/
     )
     .withMessage(
       "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
-    ),
+    )
+    .bail(),
   body("email")
     .isEmail()
     .withMessage("Please enter a valid email address")
     .bail()
-    .customSanitizer((value) => value.toLowerCase()),
+    .customSanitizer((value) => value.toLowerCase())
+    .isLength({ max: 100 })
+    .withMessage("Email Address is Too Long")
+    .bail(),
   function (req, res) {
     const { firstname, lastname, password, email } = req.body;
     console.log("v1/users/signup METHOD : POST");
@@ -75,18 +82,19 @@ router.post(
           });
 
           //create salt & Hash
+
           bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(newmember.password, salt, (err, hash) => {
               if (err) throw err;
               newmember.password = hash;
-
+              const expiresTimeInSeceond = 172800;
               newmember
                 .save()
                 .then((member) => {
                   jwt.sign(
                     { _id: member._id },
                     process.env.SECRET_KEY,
-                    { expiresIn: 1455555 },
+                    { expiresIn: expiresTimeInSeceond },
                     (err, authToken) => {
                       if (err) throw err;
                       res.status(200).json({
@@ -112,7 +120,7 @@ router.post(
       })
       .catch((err) => {
         if (err)
-          res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
+          res.status(400).json(getErrorPayload("Something went Wrong", 400));
       });
   }
 );
@@ -203,7 +211,7 @@ router.put(
     body("email")
       .if(body("email").notEmpty())
       .isEmail()
-      .withMessage("INVALID_EMAIL")
+      .withMessage("Enter Valid Email Address")
       .bail()
       .customSanitizer((value) => value.trim())
       .isLength({ max: 100 })
