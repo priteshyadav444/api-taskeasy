@@ -124,7 +124,7 @@ router.post("/signup", signupValidation, function (req, res) {
                   { expiresIn: expiresTimeInSeceond },
                   (err, authToken) => {
                     if (err) throw err;
-                    res.status(200).json({
+                    return res.status(200).json({
                       authToken,
                       user: {
                         _id: member._id,
@@ -156,7 +156,9 @@ router.post("/signup", signupValidation, function (req, res) {
       if (err)
         return res
           .status(400)
-          .json(getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err));
+          .json(
+            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+          );
     });
 });
 
@@ -208,9 +210,9 @@ router.post("/signin", signinValidation, async (req, res) => {
           getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
         );
     }
-
+    const expiresTimeInSeceond = 172800;
     const authToken = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-      expiresIn: 1100011,
+      expiresIn: expiresTimeInSeceond,
     });
 
     res.json({
@@ -225,7 +227,9 @@ router.post("/signin", signinValidation, async (req, res) => {
   } catch (error) {
     return res
       .status(400)
-      .json(getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400));
+      .json(
+        getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+      );
   }
 });
 
@@ -238,10 +242,12 @@ router.get("/load", authUser, (req, res) => {
 
   User.findOne({ _id: req.user._id })
     .then((member) => {
+      const expiresTimeInSeceond = 172800;
+
       jwt.sign(
         { _id: member._id },
         process.env.SECRET_KEY,
-        { expiresIn: 1100011 },
+        { expiresIn: expiresTimeInSeceond },
         (err, authToken) => {
           if (err) throw err;
           res.json({
@@ -299,7 +305,7 @@ router.put(
           .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
       }
 
-      // If email is passed for update, check if it already exists in the system
+      // If new email is passed for update, check if it already exists in the system
       if (email && email !== user.email) {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -337,7 +343,7 @@ router.put(
       const updatedUser = await user.save();
 
       // Return updated user details
-      res.status(200).json({
+      return res.status(200).json({
         user: {
           _id: updatedUser._id,
           firstname: updatedUser.firstname,
@@ -350,6 +356,7 @@ router.put(
       });
     } catch (error) {
       // Handle errors
+      console.log(error);
       return res
         .status(400)
         .json(
