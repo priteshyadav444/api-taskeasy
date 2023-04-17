@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 var requestIp = require("request-ip");
 const authUser = require("../middleware/authUser");
 const { ObjectId } = require("mongodb");
+const moment = require("moment");
 const {
   body,
   validationResult,
@@ -339,6 +340,8 @@ router.put(
         user.phone_no = phone_no;
       }
 
+      
+      user.updatedAt = moment.utc();
       // Save updated user
       const updatedUser = await user.save();
 
