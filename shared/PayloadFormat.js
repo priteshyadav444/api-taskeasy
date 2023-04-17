@@ -17,14 +17,16 @@ const getErrorPayload = function getErrorPayload(
   return payload;
 };
 
-const getSuccessPayload = function getErrorPayload(
+const getSuccessPayload = function getSuccessPayload(
+  success_code,
   successMessage,
   status_code,
   payloadData = null
 ) {
   const payload = {
-    errors: [
+    success: [
       {
+        success_code,
         msg: successMessage,
         status_code,
         data: payloadData,
