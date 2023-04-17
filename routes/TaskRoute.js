@@ -138,7 +138,6 @@ router.post(
       createdAt,
       _id,
     };
-    console.log(newTask)
     User.findOneAndUpdate(
       { _id: userid, "projects._id": projectid },
       {
@@ -317,7 +316,14 @@ router.put(
         if (result) {
           return res
             .status(200)
-            .json(getSuccessPayload("TASK_DELETED_SUCCESS", 200, updatedTask));
+            .json(
+              getSuccessPayload(
+                "TASK_DELETED_SUCCESS",
+                "Task Deleted Successfully",
+                200,
+                updatedTask
+              )
+            );
         }
       }
     );
@@ -371,13 +377,16 @@ router.delete("/:pid/:id", authUser, (req, res) => {
                 .status(400)
                 .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
             } else {
-              return res
-                .status(200)
-                .json(
-                  getSuccessPayload("TASK_DELETED_SUCCESS", 200, {
+              return res.status(200).json(
+                getSuccessPayload(
+                  "TASK_DELETED_SUCCESS",
+                  "Task Deleted Successfully",
+                  200,
+                  {
                     _id: taskid,
-                  })
-                );
+                  }
+                )
+              );
             }
           }
         );

@@ -12,8 +12,8 @@ function authUser(req, res, next) {
         .status(401)
         .json(getErrorPayload("AUTH_DENAID", "Authentication Failed. Token Required", 401));
     }
-    console.log("inside");
-    //verify token
+    
+    //verifing token
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded;
     // User.findOne({ _id: req.user }).then((member) => {
