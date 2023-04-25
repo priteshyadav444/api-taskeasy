@@ -11,8 +11,7 @@ const PORT = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-process.env.TZ = 'UTC';
-
+process.env.TZ = "UTC";
 
 // configuring request limit is 25mb
 app.use(bodyParser.json({ limit: "25mb" }));
@@ -30,11 +29,15 @@ app.use(function (request, response, next) {
   next();
 });
 
-app.use(
-  cors({
-    origin: "*",
-  })
-);
+const corsOptions = {
+  origin: [
+    "https://taskeasy.in",
+    "https://taskeasy.co.in",
+    "http://localhost:4200",
+  ],
+};
+
+app.use(cors(corsOptions));
 
 app.use("/v1/users", userRouter);
 app.use("/v1/tasks", taskRouter);
@@ -51,7 +54,7 @@ mongoose
   .catch((err) => console.log(err.message));
 
 try {
-  console.log(new Date().toString())
+  console.log(new Date().toString());
   app.listen(PORT, () => console.log(`Server Running At ${PORT}`));
 } catch (error) {
   console.log(error);
