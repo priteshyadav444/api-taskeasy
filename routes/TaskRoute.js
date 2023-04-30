@@ -219,145 +219,88 @@ router.get("/:id", authUser, (req, res) => {
   );
 });
 
-const taskUpdateValidation  = [];
+const taskUpdateValidation = [
+  ...taskTitleValidation,
+  ...taskCreatedAtDateValidation,
+  ...taskScheduledDateValidation,
+  ...taskThemeColourCodeValidation,
+  ...taskBadgeColourValidation,
+  ...taskSubTaskListValidation,
+  ...taskDescriptionValidation,
+];
+
 // v1/tasks/
 // Update Task
 // Auth Required Update
-router.put(
-  "/update/:pid",
-  authUser,
-  [
-    body("title")
-      .notEmpty()
-      .withMessage("TITLE_REQUIRED")
-      .bail()
-      .customSanitizer((value) => value.trim())
-      .isLength({ max: 50 })
-      .withMessage("TASK_TITLE_TOO_LONG")
-      .bail()
-      .notEmpty()
-      .withMessage("TITLE_REQUIRED")
-      .bail(),
-    body("createdAt")
-      .if(body("createdAt").notEmpty())
-      .custom((value, { req }) => {
-        const startedAtDate = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
-        if (!startedAtDate.isValid()) {
-          throw new Error("INVALID_DATE_FORMAT");
-        }
-        return true;
-      }),
-    body("scheduled_date")
-      .if(body("scheduled_date").notEmpty())
-      .custom((value, { req }) => {
-        const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
+router.put("/update/:pid", authUser, taskUpdateValidation, function (req, res) {
+  console.log("v1/tasks/ METHOD : UPDATE");
+  const userid = req.user;
+  const updatedAt = moment.utc();
 
-        if (!deadline.isValid()) {
-          throw new Error("INVALID_DATE_FORMAT");
-        }
+  var updatedTask = { ...req.body, updatedAt };
 
-        const deadlineWithoutOffset = moment.utc(
-          deadline.format("YYYY-MM-DDTHH:mm:ss.SSS")
-        ); // remove timezone offset
-
-        if (
-          req.body.createdAt == undefined ||
-          req.body.createdAt == null ||
-          req.body.createdAt == ""
-        ) {
-          req.body.createdAt = moment.utc();
-        }
-
-        let start = moment.utc(req.body.createdAt);
-
-        if (deadlineWithoutOffset.isBefore(start)) {
-          throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
-        }
-
-        return true;
-      }),
-    body("theme_colour")
-      .if(body("theme_colour").notEmpty())
-      .optional({ nullable: true })
-      .isHexColor()
-      .withMessage("INVALID_THEME_COLOUR"),
-    body("badge")
-      .if(body("badge").notEmpty())
-      .optional({ nullable: true })
-      .isIn(["low", "medium", "high", "none"])
-      .withMessage("INVALID_BADGE_VALUE"),
-    body("subtasklist")
-      .optional({ nullable: true })
-      .custom(isSubtaskArray)
-      .withMessage("INVALID_SUBTASK_LIST"),
-    body("description").optional(),
-  ],
-  function (req, res) {
-    console.log("v1/tasks/ METHOD : UPDATE");
-    const userid = req.user;
-    const updatedAt = moment.utc();
-
-    var updatedTask = { ...req.body, updatedAt };
-
-    if (updatedTask.task_status == "active" && updatedTask.startedAt == null) {
-      updatedTask = { ...req.body, startedAt: new Date() };
-    }
-
-    if (updatedTask.task_status == "done") {
-      if (updatedTask.startedAt == null) {
-        updatedTask = { ...updatedTask, startedAt: new Date() };
-      }
-      updatedTask = { ...updatedTask, completedAt: new Date() };
-    }
-
-    const projectid = req.params.pid;
-    User.updateOne(
-      {
-        _id: userid,
-      },
-      {
-        $set: {
-          "projects.$[pid].tasks.$[tid]": updatedTask,
-        },
-      },
-      {
-        multi: false,
-        upsert: false,
-        arrayFilters: [
-          {
-            "pid._id": {
-              $eq: projectid,
-            },
-          },
-          {
-            "tid._id": {
-              $eq: updatedTask._id,
-            },
-          },
-        ],
-      },
-      function (err, result) {
-        if (err)
-          return res
-            .status(400)
-            .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
-
-        if (result) {
-          return res
-            .status(200)
-            .json(
-              getSuccessPayload(
-                "TASK_DELETED_SUCCESS",
-                "Task Deleted Successfully",
-                200,
-                updatedTask
-              )
-            );
-        }
-      }
-    );
+  // setting started at time details
+  if (updatedTask.task_status == "active" && updatedTask.startedAt == null) {
+    updatedTask = { ...req.body, startedAt: new Date() };
   }
-);
+
+  // if task is direclty moved to done than also setting started at
+  if (updatedTask.task_status == "done") {
+    if (updatedTask.startedAt == null) {
+      updatedTask = { ...updatedTask, startedAt: new Date() };
+    }
+    updatedTask = { ...updatedTask, completedAt: new Date() };
+  }
+
+  const projectid = req.params.pid;
+  User.updateOne(
+    {
+      _id: userid,
+    },
+    {
+      $set: {
+        "projects.$[pid].tasks.$[tid]": updatedTask,
+      },
+    },
+    {
+      multi: false,
+      upsert: false,
+      arrayFilters: [
+        {
+          "pid._id": {
+            $eq: projectid,
+          },
+        },
+        {
+          "tid._id": {
+            $eq: updatedTask._id,
+          },
+        },
+      ],
+    },
+    function (err, result) {
+      if (err)
+        return res
+          .status(400)
+          .json(
+            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          );
+
+      if (result) {
+        return res
+          .status(200)
+          .json(
+            getSuccessPayload(
+              "TASK_DELETED_SUCCESS",
+              "Task Deleted Successfully",
+              200,
+              updatedTask
+            )
+          );
+      }
+    }
+  );
+});
 
 // v1/tasks
 // Delete Tasks
@@ -375,12 +318,16 @@ router.delete("/:pid/:id", authUser, (req, res) => {
       if (err) {
         return res
           .status(400)
-          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
+          .json(
+            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+          );
       }
       if (!user) {
         return res
           .status(404)
-          .json(getErrorPayload("DATA_NOT_FOUND", 404, err));
+          .json(
+            getErrorPayload("DATA_NOT_FOUND", "Project Not Found", 404, err)
+          );
       }
 
       // Find the task to be deleted within the project
@@ -390,7 +337,14 @@ router.delete("/:pid/:id", authUser, (req, res) => {
       if (!task) {
         return res
           .status(404)
-          .json(getErrorPayload("TASK_NOT_FOUND", 404, err));
+          .json(
+            getErrorPayload(
+              "TASK_NOT_FOUND",
+              "Requested Task Not Found",
+              404,
+              err
+            )
+          );
       }
       // Remove the task from the project's task list
       else {
@@ -404,7 +358,14 @@ router.delete("/:pid/:id", authUser, (req, res) => {
             if (err) {
               return res
                 .status(400)
-                .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
+                .json(
+                  getErrorPayload(
+                    "SERVER_ERROR",
+                    "Something Went Wrong",
+                    400,
+                    err
+                  )
+                );
             } else {
               return res.status(200).json(
                 getSuccessPayload(
@@ -434,15 +395,11 @@ router.get("/calender/all/", authUser, (req, res) => {
   const pid = req.params.pid;
   User.findOne({ _id: userid }, function (err, result) {
     if (err) {
-      const error = {
-        errors: [
-          {
-            msg: "SOMETHING_WENT_WRONG",
-            errorDetails: err,
-          },
-        ],
-      };
-      return res.status(400).json(error);
+      return res
+        .status(400)
+        .json(
+          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+        );
     }
     var arr1 = [];
     if (result) {
@@ -475,15 +432,11 @@ router.get("/calender/:pid/", authUser, (req, res) => {
     { "projects.$": 1 },
     function (err, result) {
       if (err) {
-        const error = {
-          errors: [
-            {
-              msg: "SOMETHING_WENT_WRONG",
-              errorDetails: err,
-            },
-          ],
-        };
-        return res.status(400).json(error);
+        return res
+          .status(400)
+          .json(
+            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+          );
       }
 
       if (result) {
