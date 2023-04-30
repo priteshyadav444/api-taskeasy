@@ -283,7 +283,7 @@ router.put("/update/:pid", authUser, taskUpdateValidation, function (req, res) {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
           );
 
       if (result) {
@@ -326,7 +326,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
         return res
           .status(404)
           .json(
-            getErrorPayload("DATA_NOT_FOUND", "Project Not Found", 404, err)
+            getErrorPayload("DATA_NOT_FOUND", "Project Not Found", 404)
           );
       }
 
@@ -341,8 +341,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
             getErrorPayload(
               "TASK_NOT_FOUND",
               "Requested Task Not Found",
-              404,
-              err
+              404
             )
           );
       }

@@ -167,12 +167,7 @@ const validateProjectExistence = (req, res, next) => {
         return res
           .status(404)
           .json(
-            getErrorPayload(
-              "PROJECT_NOT_FOUND",
-              "Project is Not Found",
-              404,
-              err
-            )
+            getErrorPayload("PROJECT_NOT_FOUND", "Project is Not Found", 404)
           );
       }
       next();
@@ -227,12 +222,7 @@ router.put(
           return res
             .status(404)
             .json(
-              getErrorPayload(
-                "PROJECT_NOT_FOUND",
-                "Project is Not Found",
-                404,
-                err
-              )
+              getErrorPayload("PROJECT_NOT_FOUND", "Project is Not Found", 404)
             );
         }
         return res.status(200).json(project);
