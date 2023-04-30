@@ -374,20 +374,21 @@ const updatePasswordValidation = [
     .exists()
     .withMessage("Old Password is required")
     .trim()
-    .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid Old Password"),
+    .bail(),
   check("new_password")
     .exists()
     .withMessage("New Password is required")
     .trim()
     .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid New Password"),
+    .withMessage("Enter Valid New Password")
+    .bail(),
   check("conform_password")
     .exists()
     .withMessage("Conform Password is required")
     .trim()
     .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid Conform Password"),
+    .withMessage("Enter Valid Conform Password")
+    .bail(),
 ];
 
 // v1/users/passwordUpdate
@@ -397,6 +398,7 @@ router.put(
   "/updatePassword",
   authUser,
   updatePasswordValidation,
+  passwordValidation,
   async function (req, res) {
     const { password, new_password, conform_password } = req.body;
     console.log("v1/users/updatePassword METHOD : POST");

@@ -25,138 +25,164 @@ const isSubtaskArray = (value) => {
   });
 };
 
+const taskTitleValidation = [
+  body("title")
+    .notEmpty()
+    .withMessage("TITLE_REQUIRED")
+    .bail()
+    .customSanitizer((value) => value.trim())
+    .isLength({ max: 50 })
+    .withMessage("TASK_TITLE_TOO_LONG")
+    .bail()
+    .notEmpty()
+    .withMessage("TITLE_REQUIRED")
+    .bail(),
+];
+
+const taskCreatedAtDateValidation = [
+  body("createdAt")
+    .if(body("createdAt").notEmpty())
+    .custom((value, { req }) => {
+      const startedAtDate = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
+      if (!startedAtDate.isValid()) {
+        throw new Error("INVALID_DATE_FORMAT");
+      }
+      return true;
+    }),
+];
+
+const taskScheduledDateValidation = [
+  body("scheduled_date")
+    .if(body("scheduled_date").notEmpty())
+    .custom((value, { req }) => {
+      const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
+      if (!deadline.isValid()) {
+        throw new Error("INVALID_DATE_FORMAT");
+      }
+
+      const deadlineWithoutOffset = moment.utc(
+        deadline.format("YYYY-MM-DDTHH:mm:ss.SSS")
+      ); // remove timezone offset
+      if (
+        req.body.createdAt == undefined ||
+        req.body.createdAt == null ||
+        req.body.createdAt == ""
+      ) {
+        req.body.createdAt = moment.utc();
+      }
+
+      let start = moment.utc(req.body.createdAt);
+
+      if (deadlineWithoutOffset.isBefore(start)) {
+        throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
+      }
+
+      return true;
+    }),
+];
+
+const taskThemeColourCodeValidation = [
+  body("theme_colour")
+    .if(body("theme_colour").notEmpty())
+    .optional({ nullable: true })
+    .isHexColor()
+    .withMessage("INVALID_THEME_COLOUR"),
+];
+
+const taskBadgeColourValidation = [
+  body("badge")
+    .if(body("badge").notEmpty())
+    .optional({ nullable: true })
+    .isIn(["low", "medium", "high", "none"])
+    .withMessage("INVALID_BADGE_VALUE"),
+];
+
+const taskSubTaskListValidation = [
+  body("subtasklist")
+    .optional({ nullable: true })
+    .custom(isSubtaskArray)
+    .withMessage("INVALID_SUBTASK_LIST"),
+];
+
+const taskDescriptionValidation = [body("description").optional()];
+
+const createTaskValidation = [
+  ...taskTitleValidation,
+  ...taskCreatedAtDateValidation,
+  ...taskScheduledDateValidation,
+  ...taskThemeColourCodeValidation,
+  ...taskBadgeColourValidation,
+  ...taskSubTaskListValidation,
+  ...taskDescriptionValidation,
+];
+
 // v1/tasks
 // Create Task
 // Auth Required
-router.post(
-  "/:id",
-  authUser,
-  [
-    body("title")
-      .notEmpty()
-      .withMessage("TITLE_REQUIRED")
-      .bail()
-      .customSanitizer((value) => value.trim())
-      .isLength({ max: 50 })
-      .withMessage("TASK_TITLE_TOO_LONG")
-      .bail()
-      .notEmpty()
-      .withMessage("TITLE_REQUIRED")
-      .bail(),
-    body("createdAt")
-      .if(body("createdAt").notEmpty())
-      .custom((value, { req }) => {
-        const startedAtDate = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
-        if (!startedAtDate.isValid()) {
-          throw new Error("INVALID_DATE_FORMAT");
-        }
-        return true;
-      }),
-    body("scheduled_date")
-      .if(body("scheduled_date").notEmpty())
-      .custom((value, { req }) => {
-        const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
-        if (!deadline.isValid()) {
-          throw new Error("INVALID_DATE_FORMAT");
-        }
+router.post("/:id", authUser, createTaskValidation, function (req, res) {
+  console.log("v1/tasks/ METHOD : POST");
+  const _id = ObjectId().toHexString();
+  var {
+    title,
+    description,
+    badge,
+    scheduled_date,
+    completed,
+    subtasklist,
+    theme_colour,
+    task_status,
+    createdAt,
+  } = req.body;
 
-        const deadlineWithoutOffset = moment.utc(
-          deadline.format("YYYY-MM-DDTHH:mm:ss.SSS")
-        ); // remove timezone offset
-        if (
-          req.body.createdAt == undefined ||
-          req.body.createdAt == null ||
-          req.body.createdAt == ""
-        ) {
-          req.body.createdAt = moment.utc();
-        }
+  const userid = req.user;
+  const projectid = req.params.id;
 
-        let start = moment.utc(req.body.createdAt);
+  const errors = validationResult(req);
 
-        if (deadlineWithoutOffset.isBefore(start)) {
-          throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
-        }
-
-        return true;
-      }),
-    body("theme_colour")
-      .if(body("theme_colour").notEmpty())
-      .optional({ nullable: true })
-      .isHexColor()
-      .withMessage("INVALID_THEME_COLOUR"),
-    body("badge")
-      .if(body("badge").notEmpty())
-      .optional({ nullable: true })
-      .isIn(["low", "medium", "high", "none"])
-      .withMessage("INVALID_BADGE_VALUE"),
-    body("subtasklist")
-      .optional({ nullable: true })
-      .custom(isSubtaskArray)
-      .withMessage("INVALID_SUBTASK_LIST"),
-    body("description").optional(),
-  ],
-  function (req, res) {
-    console.log("v1/tasks/ METHOD : POST");
-    const _id = ObjectId().toHexString();
-    var {
-      title,
-      description,
-      badge,
-      scheduled_date,
-      completed,
-      subtasklist,
-      theme_colour,
-      task_status,
-      createdAt,
-    } = req.body;
-
-    const userid = req.user;
-    const projectid = req.params.id;
-
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    // if createdAt (Task Start Date) is defined than set current date
-    if (createdAt == undefined || createdAt == null || createdAt == "") {
-      createdAt = moment.utc();
-    }
-
-    const updatedAt = moment.utc();
-
-    let newTask = {
-      title,
-      description,
-      scheduled_date,
-      completed,
-      subtasklist,
-      badge,
-      task_status,
-      theme_colour,
-      updatedAt,
-      createdAt,
-      _id,
-    };
-    User.findOneAndUpdate(
-      { _id: userid, "projects._id": projectid },
-      {
-        $push: {
-          "projects.$.tasks": newTask,
-        },
-      },
-      { new: true }
-    )
-      .then((result) => {
-        return res.status(200).json(newTask);
-      })
-      .catch((err) => {
-        return res
-          .status(400)
-          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
-      });
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
-);
+  // if createdAt (Task Start Date) is defined than set current date
+  if (createdAt == undefined || createdAt == null || createdAt == "") {
+    createdAt = moment.utc();
+  }
+
+  const updatedAt = moment.utc();
+
+  let newTask = {
+    title,
+    description,
+    scheduled_date,
+    completed,
+    subtasklist,
+    badge,
+    task_status,
+    theme_colour,
+    updatedAt,
+    createdAt,
+    _id,
+  };
+
+  User.findOneAndUpdate(
+    { _id: userid, "projects._id": projectid },
+    {
+      $push: {
+        "projects.$.tasks": newTask,
+      },
+    },
+    { new: true }
+  )
+    .then((result) => {
+      return res.status(200).json(newTask);
+    })
+    .catch((err) => {
+      return res
+        .status(400)
+        .json(
+          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+        );
+    });
+});
 
 // v1/tasks
 // Get All  Task
@@ -173,7 +199,9 @@ router.get("/:id", authUser, (req, res) => {
       if (err) {
         return res
           .status(400)
-          .json(getErrorPayload("SOMETHING_WENT_WRONG", 400, err));
+          .json(
+            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+          );
       }
 
       if (result) {
@@ -191,6 +219,7 @@ router.get("/:id", authUser, (req, res) => {
   );
 });
 
+const taskUpdateValidation  = [];
 // v1/tasks/
 // Update Task
 // Auth Required Update
