@@ -25,7 +25,6 @@ const UserScheme = new Schema(
         tasks: [
           {
             title: { type: String, required: true },
-            completed: { type: Boolean, default: false },
             description: { type: String, default: null },
             task_status: { type: String, required: true, default: "pending" },
             badge: { type: String, default: "low" },
@@ -43,7 +42,6 @@ const UserScheme = new Schema(
         deleted_tasks: [
           {
             title: { type: String, required: true },
-            completed: { type: Boolean, default: false },
             description: { type: String, default: null },
             task_status: { type: String, required: true, default: "pending" },
             badge: { type: String, default: "low" },
@@ -75,7 +73,6 @@ const UserScheme = new Schema(
         tasks: [
           {
             title: { type: String, required: true },
-            completed: { type: Boolean, default: false },
             description: { type: String, default: null },
             task_status: { type: String, required: true, default: "pending" },
             badge: { type: String, default: "low" },
@@ -93,7 +90,6 @@ const UserScheme = new Schema(
         deleted_tasks: [
           {
             title: { type: String, required: true },
-            completed: { type: Boolean, default: false },
             description: { type: String, default: null },
             task_status: { type: String, required: true, default: "pending" },
             badge: { type: String, default: "low" },
