@@ -216,7 +216,7 @@ router.post("/signin", signinValidation, async (req, res) => {
       expiresIn: expiresTimeInSeceond,
     });
 
-    res.json({
+    return res.json({
       authToken,
       user: {
         _id: user._id,
@@ -251,7 +251,7 @@ router.get("/load", authUser, (req, res) => {
         { expiresIn: expiresTimeInSeceond },
         (err, authToken) => {
           if (err) throw err;
-          res.json({
+          return res.json({
             authToken,
             user: {
               _id: member._id,

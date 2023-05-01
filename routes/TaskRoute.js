@@ -303,7 +303,6 @@ router.put("/update/:pid", authUser, taskUpdateValidation, function (req, res) {
 // v1/tasks
 // Delete Tasks
 // Auth Required
-
 router.delete("/:pid/:id", authUser, (req, res) => {
   console.log("v1/tasks/" + req.params.id + " METHOD : DELETE");
   const userid = req.user;
