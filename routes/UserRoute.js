@@ -77,17 +77,6 @@ const signupValidation = [
 router.post("/signup", signupValidation, function (req, res) {
   const { firstname, lastname, password, email } = req.body;
   console.log("v1/users/signup METHOD : POST");
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  // senitization of input
-  check("firstname").escape();
-  check("lastname").escape();
-  check("password").escape();
-  check("email").normalizeEmail();
-
   // checking is already exists
   User.findOne({ email })
     .then((user) => {
@@ -102,6 +91,17 @@ router.post("/signup", signupValidation, function (req, res) {
             )
           );
       } else {
+        // returing errors if data is valid
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ errors: errors.array() });
+        }
+        
+        // senitization of input
+        check("firstname").escape();
+        check("lastname").escape();
+        check("password").escape();
+        check("email").normalizeEmail();
         const newmember = new User({
           firstname,
           lastname,
@@ -340,7 +340,6 @@ router.put(
         user.phone_no = phone_no;
       }
 
-      
       user.updatedAt = moment.utc();
       // Save updated user
       const updatedUser = await user.save();
