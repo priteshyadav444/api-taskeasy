@@ -19,11 +19,12 @@ const {
   getSuccessPayload,
 } = require("../shared/PayloadFormat");
 
+// Validation for first name
 const firstnameValidation = [
   body("firstname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("First Name Must Be Between 1 And 30 Characters")
+    .withMessage("First name must be between 1 and 30 characters.")
     .bail(),
 ];
 
@@ -32,7 +33,7 @@ const lastnameValidation = [
   body("lastname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("Last Name Must Be Between 1 And 30 Characters")
+    .withMessage("Last name must be between 1 and 30 characters.")
     .bail(),
 ];
 
@@ -40,13 +41,13 @@ const lastnameValidation = [
 const passwordValidation = [
   body("password")
     .isLength({ min: 8, max: 40 })
-    .withMessage("Password Must Be Between 8 And 40 Characters")
+    .withMessage("Password must be between 8 and 40 characters.")
     .bail()
     .matches(
       /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{"':;?/>.<,])(?!.*\s).*$/
     )
     .withMessage(
-      "Password Must Contain At Least One Uppercase Letter, One Lowercase Letter, One Number, And One Special Character"
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
     )
     .bail(),
 ];
@@ -55,11 +56,11 @@ const passwordValidation = [
 const emailValidation = [
   body("email")
     .isEmail()
-    .withMessage("Please Enter A Valid Email Address")
+    .withMessage("Please enter a valid email address.")
     .bail()
     .customSanitizer((value) => value.toLowerCase())
     .isLength({ max: 100 })
-    .withMessage("Email Address Is Too Long")
+    .withMessage("Email address is too long.")
     .bail(),
 ];
 
@@ -86,7 +87,7 @@ router.post("/signup", signupValidation, function (req, res) {
           .json(
             getErrorPayload(
               "EMAIL_ALREADY_REGISTERED",
-              "User Already Exist",
+              "The email you entered is already registered",
               409
             )
           );
@@ -143,7 +144,7 @@ router.post("/signup", signupValidation, function (req, res) {
                   .json(
                     getErrorPayload(
                       "SIGNUP_FAILED",
-                      "Signup Failed Please Try Again",
+                      "Signup failed. Please try again",
                       400,
                       err
                     )
@@ -158,7 +159,7 @@ router.post("/signup", signupValidation, function (req, res) {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
           );
     });
 });
@@ -195,11 +196,7 @@ router.post("/signin", signinValidation, async (req, res) => {
       return res
         .status(401)
         .json(
-          getErrorPayload(
-            "INVALID_CREDENTIALS",
-            "Email Not Registered",
-            401
-          )
+          getErrorPayload("INVALID_CREDENTIALS", "Email Not Registered", 401)
         );
     }
 
@@ -230,7 +227,7 @@ router.post("/signin", signinValidation, async (req, res) => {
     return res
       .status(400)
       .json(
-        getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+        getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
       );
   }
 });
@@ -268,7 +265,7 @@ router.get("/load", authUser, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
         );
     });
 });
@@ -367,7 +364,7 @@ router.put(
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
         );
     }
   }
@@ -465,7 +462,7 @@ router.put(
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
         );
     }
   }
