@@ -266,7 +266,18 @@ router.get("/load", authUser, (req, res) => {
         process.env.SECRET_KEY,
         { expiresIn: expiresTimeInSeceond },
         (err, authToken) => {
-          if (err) throw err;
+          if (err) {
+            return res
+              .status(400)
+              .json(
+                getErrorPayload(
+                  "JWT_ERROR",
+                  "Error while generating token",
+                  400,
+                  err
+                )
+              );
+          }
           return res.json({
             authToken,
             user: {
@@ -279,9 +290,9 @@ router.get("/load", authUser, (req, res) => {
         }
       );
     })
-    .catch((err) => {
+    .catch((error) => {
       return res
-        .status(400)
+        .status(500)
         .json(
           getErrorPayload(
             "SERVER_ERROR",
