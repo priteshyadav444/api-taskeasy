@@ -10,7 +10,7 @@ function authUser(req, res, next) {
     if (!token) {
       return res
         .status(401)
-        .json(getErrorPayload("AUTH_DENAID", "Authentication Failed. Token Required", 401));
+        .json(getErrorPayload("AUTH_DENAID", "Authentication failed. Token required", 401));
     }
     
     //verifing token
@@ -27,7 +27,7 @@ function authUser(req, res, next) {
       return res
         .status(400)
         .json(
-          getErrorPayload("TOKEN_EXPIRED", "Your Session Expired", 400, error)
+          getErrorPayload("TOKEN_EXPIRED", "Your session expired", 400, error)
         );
     } else {
       return res
@@ -35,7 +35,7 @@ function authUser(req, res, next) {
         .json(
           getErrorPayload(
             "INVALID_TOKEN",
-            "Invalid Token Please Login Again",
+            "Invalid token please login again",
             400,
             error
           )
