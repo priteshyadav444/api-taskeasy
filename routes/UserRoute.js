@@ -159,7 +159,12 @@ router.post("/signup", signupValidation, function (req, res) {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              err
+            )
           );
     });
 });
@@ -181,7 +186,7 @@ router.post("/signin", signinValidation, async (req, res) => {
   console.log("v1/users/signin METHOD : POST  " + clientIp);
 
   const { email, password } = req.body;
-  // senitization of input
+  // sanitize input
   check("email").normalizeEmail();
   check("password").escape();
 
@@ -196,17 +201,25 @@ router.post("/signin", signinValidation, async (req, res) => {
       return res
         .status(401)
         .json(
-          getErrorPayload("INVALID_CREDENTIALS", "Email Not Registered", 401)
+          getErrorPayload(
+            "INVALID_CREDENTIALS",
+            "The email you entered is not registered. Please sign up.",
+            401
+          )
         );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    // if password mis-match
+    // if password doesn't match
     if (!isMatch) {
       return res
         .status(401)
         .json(
-          getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
+          getErrorPayload(
+            "INVALID_CREDENTIALS",
+            "The password you entered is incorrect. Please try again.",
+            401
+          )
         );
     }
     const expiresTimeInSeceond = 172800;
@@ -227,7 +240,12 @@ router.post("/signin", signinValidation, async (req, res) => {
     return res
       .status(400)
       .json(
-        getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+        getErrorPayload(
+          "SERVER_ERROR",
+          "Something went wrong on the server. Please try again later.",
+          400,
+          error
+        )
       );
   }
 });
@@ -265,7 +283,12 @@ router.get("/load", authUser, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     });
 });
@@ -364,7 +387,12 @@ router.put(
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     }
   }
@@ -462,7 +490,12 @@ router.put(
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     }
   }
