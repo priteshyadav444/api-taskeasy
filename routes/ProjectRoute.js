@@ -23,7 +23,7 @@ router.get("/", authUser, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
         );
     }
 
@@ -147,7 +147,7 @@ router.post("/", authUser, projectCreateValidation, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
         );
     });
 });
@@ -231,7 +231,7 @@ router.put(
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
           );
       });
   }
@@ -287,7 +287,7 @@ router.delete("/:projectId", authUser, validateProjectId, async (req, res) => {
       .json(
         getErrorPayload(
           "SERVER_ERROR",
-          "Something went wrong while deleting the project",
+          "Something went wrong on the server. Please try again later. while deleting the project",
           500,
           error
         )

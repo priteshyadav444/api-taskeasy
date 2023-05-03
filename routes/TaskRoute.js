@@ -177,7 +177,7 @@ router.post("/:id", authUser, createTaskValidation, function (req, res) {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
         );
     });
 });
@@ -198,7 +198,7 @@ router.get("/:id", authUser, (req, res) => {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
           );
       }
 
@@ -281,7 +281,7 @@ router.put("/update/:pid", authUser, taskUpdateValidation, function (req, res) {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
           );
 
       if (result) {
@@ -316,7 +316,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
           );
       }
       if (!user) {
@@ -357,7 +357,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
                 .json(
                   getErrorPayload(
                     "SERVER_ERROR",
-                    "Something Went Wrong",
+                    "Something went wrong on the server. Please try again later.",
                     400,
                     err
                   )
@@ -394,7 +394,7 @@ router.get("/calender/all/", authUser, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
         );
     }
     var arr1 = [];
@@ -431,7 +431,7 @@ router.get("/calender/:pid/", authUser, (req, res) => {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
           );
       }
 
