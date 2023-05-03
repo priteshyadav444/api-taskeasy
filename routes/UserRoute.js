@@ -338,8 +338,8 @@ router.put(
       const user = await User.findById(req.user._id);
       if (!user) {
         return res
-          .status(401)
-          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
+          .status(404)
+          .json(getErrorPayload("USER_NOT_FOUND", "User not found.", 404));
       }
 
       // If new email is passed for update, check if it already exists in the system
@@ -351,7 +351,7 @@ router.put(
             .json(
               getErrorPayload(
                 "EMAIL_ALREADY_REGISTERED",
-                "Email Is Already Registered",
+                "The email is already registered.",
                 409
               )
             );
