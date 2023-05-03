@@ -23,7 +23,7 @@ const firstnameValidation = [
   body("firstname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("First name must be between 1 and 30 characters")
+    .withMessage("First Name Must Be Between 1 And 30 Characters")
     .bail(),
 ];
 
@@ -32,7 +32,7 @@ const lastnameValidation = [
   body("lastname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("Last name must be between 1 and 30 characters")
+    .withMessage("Last Name Must Be Between 1 And 30 Characters")
     .bail(),
 ];
 
@@ -40,13 +40,13 @@ const lastnameValidation = [
 const passwordValidation = [
   body("password")
     .isLength({ min: 8, max: 40 })
-    .withMessage("Password must be between 8 and 40 characters")
+    .withMessage("Password Must Be Between 8 And 40 Characters")
     .bail()
     .matches(
       /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{"':;?/>.<,])(?!.*\s).*$/
     )
     .withMessage(
-      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+      "Password Must Contain At Least One Uppercase Letter, One Lowercase Letter, One Number, And One Special Character"
     )
     .bail(),
 ];
@@ -55,11 +55,11 @@ const passwordValidation = [
 const emailValidation = [
   body("email")
     .isEmail()
-    .withMessage("Please enter a valid email address")
+    .withMessage("Please Enter A Valid Email Address")
     .bail()
     .customSanitizer((value) => value.toLowerCase())
     .isLength({ max: 100 })
-    .withMessage("Email Address is Too Long")
+    .withMessage("Email Address Is Too Long")
     .bail(),
 ];
 
@@ -96,7 +96,7 @@ router.post("/signup", signupValidation, function (req, res) {
         if (!errors.isEmpty()) {
           return res.status(400).json({ errors: errors.array() });
         }
-        
+
         // senitization of input
         check("firstname").escape();
         check("lastname").escape();
@@ -167,7 +167,7 @@ const signinValidation = [
   ...emailValidation,
   check("password")
     .exists()
-    .withMessage("Password is required")
+    .withMessage("Password Is Required")
     .trim()
     .isLength({ min: 1, max: 40 })
     .withMessage("Enter Valid Password"),
@@ -197,13 +197,14 @@ router.post("/signin", signinValidation, async (req, res) => {
         .json(
           getErrorPayload(
             "INVALID_CREDENTIALS",
-            "Email ID Is Not Registered",
+            "Email Not Registered",
             401
           )
         );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+    // if password mis-match
     if (!isMatch) {
       return res
         .status(401)
@@ -264,7 +265,11 @@ router.get("/load", authUser, (req, res) => {
       );
     })
     .catch((err) => {
-      return res.status(400).json(getErrorPayload("SOMETHING_WENT_WRONG", 400));
+      return res
+        .status(400)
+        .json(
+          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+        );
     });
 });
 
@@ -315,7 +320,7 @@ router.put(
             .json(
               getErrorPayload(
                 "EMAIL_ALREADY_REGISTERED",
-                "Email is already registered",
+                "Email Is Already Registered",
                 409
               )
             );
@@ -371,19 +376,19 @@ router.put(
 const updatePasswordValidation = [
   check("password")
     .exists()
-    .withMessage("Old Password is required")
+    .withMessage("Old Password Is Required")
     .trim()
     .bail(),
   check("new_password")
     .exists()
-    .withMessage("New Password is required")
+    .withMessage("New Password Is Required")
     .trim()
     .isLength({ min: 1, max: 40 })
     .withMessage("Enter Valid New Password")
     .bail(),
   check("conform_password")
     .exists()
-    .withMessage("Conform Password is required")
+    .withMessage("Conform Password Is Required")
     .trim()
     .isLength({ min: 1, max: 40 })
     .withMessage("Enter Valid Conform Password")
@@ -419,7 +424,7 @@ router.put(
         .json(
           getErrorPayload(
             "PASSWORD_SAME",
-            "Old Password and new Password Is Same",
+            "Old Password And New Password Is Same",
             400
           )
         );
