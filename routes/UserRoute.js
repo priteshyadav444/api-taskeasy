@@ -412,22 +412,24 @@ router.put(
 const updatePasswordValidation = [
   check("password")
     .exists()
-    .withMessage("Old Password Is Required")
+    .withMessage("Old password is required.")
     .trim()
     .bail(),
   check("new_password")
     .exists()
-    .withMessage("New Password Is Required")
+    .withMessage("New password is required.")
     .trim()
     .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid New Password")
+    .withMessage("New password must be between 1 and 40 characters long.")
     .bail(),
   check("conform_password")
     .exists()
-    .withMessage("Conform Password Is Required")
+    .withMessage("Confirmation password is required.")
     .trim()
     .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid Conform Password")
+    .withMessage(
+      "Confirmation password must be between 1 and 40 characters long."
+    )
     .bail(),
 ];
 
@@ -451,7 +453,7 @@ router.put(
     if (new_password !== conform_password) {
       return res
         .status(400)
-        .json(getErrorPayload("PASSWORD_MISMATCH", "Password Mismatch", 400));
+        .json(getErrorPayload("PASSWORD_MISMATCH", "New password and conform password do not match.", 400));
     }
 
     if (new_password == password) {
@@ -460,7 +462,7 @@ router.put(
         .json(
           getErrorPayload(
             "PASSWORD_SAME",
-            "Old Password And New Password Is Same",
+            "New password cannot be same as old password.",
             400
           )
         );
@@ -471,7 +473,7 @@ router.put(
       if (!user) {
         return res
           .status(401)
-          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
+          .json(getErrorPayload("USER_NOT_FOUND", "User not found.", 401));
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
@@ -479,7 +481,7 @@ router.put(
         return res
           .status(401)
           .json(
-            getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
+            getErrorPayload("INVALID_CREDENTIALS", "Old password is incorrect.", 401)
           );
       }
       const salt = await bcrypt.genSalt(10);
@@ -493,7 +495,7 @@ router.put(
         .json(
           getSuccessPayload(
             "PASSWORD_UPDATED",
-            "Password Updated Successfully",
+            "Password updated successfully",
             200
           )
         );
