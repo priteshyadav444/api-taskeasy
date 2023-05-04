@@ -19,11 +19,12 @@ const {
   getSuccessPayload,
 } = require("../shared/PayloadFormat");
 
+// Validation for first name
 const firstnameValidation = [
   body("firstname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("First Name Must Be Between 1 And 30 Characters")
+    .withMessage("First name must be between 1 and 30 characters.")
     .bail(),
 ];
 
@@ -32,7 +33,7 @@ const lastnameValidation = [
   body("lastname")
     .trim()
     .isLength({ min: 1, max: 30 })
-    .withMessage("Last Name Must Be Between 1 And 30 Characters")
+    .withMessage("Last name must be between 1 and 30 characters.")
     .bail(),
 ];
 
@@ -40,13 +41,13 @@ const lastnameValidation = [
 const passwordValidation = [
   body("password")
     .isLength({ min: 8, max: 40 })
-    .withMessage("Password Must Be Between 8 And 40 Characters")
+    .withMessage("Password must be between 8 and 40 characters.")
     .bail()
     .matches(
       /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{"':;?/>.<,])(?!.*\s).*$/
     )
     .withMessage(
-      "Password Must Contain At Least One Uppercase Letter, One Lowercase Letter, One Number, And One Special Character"
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
     )
     .bail(),
 ];
@@ -55,11 +56,11 @@ const passwordValidation = [
 const emailValidation = [
   body("email")
     .isEmail()
-    .withMessage("Please Enter A Valid Email Address")
+    .withMessage("Please enter a valid email address.")
     .bail()
     .customSanitizer((value) => value.toLowerCase())
     .isLength({ max: 100 })
-    .withMessage("Email Address Is Too Long")
+    .withMessage("Email address is too long.")
     .bail(),
 ];
 
@@ -86,7 +87,7 @@ router.post("/signup", signupValidation, function (req, res) {
           .json(
             getErrorPayload(
               "EMAIL_ALREADY_REGISTERED",
-              "User Already Exist",
+              "The email you entered is already registered",
               409
             )
           );
@@ -143,7 +144,7 @@ router.post("/signup", signupValidation, function (req, res) {
                   .json(
                     getErrorPayload(
                       "SIGNUP_FAILED",
-                      "Signup Failed Please Try Again",
+                      "Signup failed. Please try again",
                       400,
                       err
                     )
@@ -158,7 +159,12 @@ router.post("/signup", signupValidation, function (req, res) {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, err)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              err
+            )
           );
     });
 });
@@ -180,7 +186,7 @@ router.post("/signin", signinValidation, async (req, res) => {
   console.log("v1/users/signin METHOD : POST  " + clientIp);
 
   const { email, password } = req.body;
-  // senitization of input
+  // sanitize input
   check("email").normalizeEmail();
   check("password").escape();
 
@@ -197,19 +203,23 @@ router.post("/signin", signinValidation, async (req, res) => {
         .json(
           getErrorPayload(
             "INVALID_CREDENTIALS",
-            "Email Not Registered",
+            "The email you entered is not registered. Please sign up.",
             401
           )
         );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    // if password mis-match
+    // if password doesn't match
     if (!isMatch) {
       return res
         .status(401)
         .json(
-          getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
+          getErrorPayload(
+            "INVALID_CREDENTIALS",
+            "The password you entered is incorrect. Please try again.",
+            401
+          )
         );
     }
     const expiresTimeInSeceond = 172800;
@@ -230,7 +240,12 @@ router.post("/signin", signinValidation, async (req, res) => {
     return res
       .status(400)
       .json(
-        getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+        getErrorPayload(
+          "SERVER_ERROR",
+          "Something went wrong on the server. Please try again later.",
+          400,
+          error
+        )
       );
   }
 });
@@ -251,7 +266,18 @@ router.get("/load", authUser, (req, res) => {
         process.env.SECRET_KEY,
         { expiresIn: expiresTimeInSeceond },
         (err, authToken) => {
-          if (err) throw err;
+          if (err) {
+            return res
+              .status(400)
+              .json(
+                getErrorPayload(
+                  "JWT_ERROR",
+                  "Error while generating token",
+                  400,
+                  err
+                )
+              );
+          }
           return res.json({
             authToken,
             user: {
@@ -264,11 +290,16 @@ router.get("/load", authUser, (req, res) => {
         }
       );
     })
-    .catch((err) => {
+    .catch((error) => {
       return res
-        .status(400)
+        .status(500)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     });
 });
@@ -307,8 +338,8 @@ router.put(
       const user = await User.findById(req.user._id);
       if (!user) {
         return res
-          .status(401)
-          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
+          .status(404)
+          .json(getErrorPayload("USER_NOT_FOUND", "User not found.", 404));
       }
 
       // If new email is passed for update, check if it already exists in the system
@@ -320,7 +351,7 @@ router.put(
             .json(
               getErrorPayload(
                 "EMAIL_ALREADY_REGISTERED",
-                "Email Is Already Registered",
+                "The email is already registered.",
                 409
               )
             );
@@ -367,7 +398,12 @@ router.put(
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     }
   }
@@ -376,22 +412,24 @@ router.put(
 const updatePasswordValidation = [
   check("password")
     .exists()
-    .withMessage("Old Password Is Required")
+    .withMessage("Old password is required.")
     .trim()
     .bail(),
   check("new_password")
     .exists()
-    .withMessage("New Password Is Required")
+    .withMessage("New password is required.")
     .trim()
     .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid New Password")
+    .withMessage("New password must be between 1 and 40 characters long.")
     .bail(),
   check("conform_password")
     .exists()
-    .withMessage("Conform Password Is Required")
+    .withMessage("Confirmation password is required.")
     .trim()
     .isLength({ min: 1, max: 40 })
-    .withMessage("Enter Valid Conform Password")
+    .withMessage(
+      "Confirmation password must be between 1 and 40 characters long."
+    )
     .bail(),
 ];
 
@@ -415,7 +453,7 @@ router.put(
     if (new_password !== conform_password) {
       return res
         .status(400)
-        .json(getErrorPayload("PASSWORD_MISMATCH", "Password Mismatch", 400));
+        .json(getErrorPayload("PASSWORD_MISMATCH", "New password and conform password do not match.", 400));
     }
 
     if (new_password == password) {
@@ -424,7 +462,7 @@ router.put(
         .json(
           getErrorPayload(
             "PASSWORD_SAME",
-            "Old Password And New Password Is Same",
+            "New password cannot be same as old password.",
             400
           )
         );
@@ -435,7 +473,7 @@ router.put(
       if (!user) {
         return res
           .status(401)
-          .json(getErrorPayload("USER_NOT_FOUND", "User Not Exists", 401));
+          .json(getErrorPayload("USER_NOT_FOUND", "User not found.", 401));
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
@@ -443,7 +481,7 @@ router.put(
         return res
           .status(401)
           .json(
-            getErrorPayload("INVALID_CREDENTIALS", "Password Is Incorrect", 401)
+            getErrorPayload("INVALID_CREDENTIALS", "Old password is incorrect.", 401)
           );
       }
       const salt = await bcrypt.genSalt(10);
@@ -457,7 +495,7 @@ router.put(
         .json(
           getSuccessPayload(
             "PASSWORD_UPDATED",
-            "Password Updated Successfully",
+            "Password updated successfully",
             200
           )
         );
@@ -465,7 +503,12 @@ router.put(
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something Went Wrong", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     }
   }
