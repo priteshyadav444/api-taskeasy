@@ -28,14 +28,11 @@ const isSubtaskArray = (value) => {
 const taskTitleValidation = [
   body("title")
     .notEmpty()
-    .withMessage("TITLE_REQUIRED")
+    .withMessage("Task Title Required")
     .bail()
     .customSanitizer((value) => value.trim())
     .isLength({ max: 50 })
-    .withMessage("TASK_TITLE_TOO_LONG")
-    .bail()
-    .notEmpty()
-    .withMessage("TITLE_REQUIRED")
+    .withMessage("Task Title is too long max.50 allowed")
     .bail(),
 ];
 
@@ -45,7 +42,7 @@ const taskCreatedAtDateValidation = [
     .custom((value, { req }) => {
       const startedAtDate = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
       if (!startedAtDate.isValid()) {
-        throw new Error("INVALID_DATE_FORMAT");
+        throw new Error("Invalid date format");
       }
       return true;
     }),
@@ -57,7 +54,7 @@ const taskScheduledDateValidation = [
     .custom((value, { req }) => {
       const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
       if (!deadline.isValid()) {
-        throw new Error("INVALID_DATE_FORMAT");
+        throw new Error("invalid date format");
       }
 
       const deadlineWithoutOffset = moment.utc(
@@ -74,7 +71,7 @@ const taskScheduledDateValidation = [
       let start = moment.utc(req.body.createdAt);
 
       if (deadlineWithoutOffset.isBefore(start)) {
-        throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
+        throw new Error("End Date must be greater than start date");
       }
 
       return true;
@@ -86,7 +83,7 @@ const taskThemeColourCodeValidation = [
     .if(body("theme_colour").notEmpty())
     .optional({ nullable: true })
     .isHexColor()
-    .withMessage("INVALID_THEME_COLOUR"),
+    .withMessage("Invalid theme colour"),
 ];
 
 const taskBadgeColourValidation = [
@@ -94,14 +91,14 @@ const taskBadgeColourValidation = [
     .if(body("badge").notEmpty())
     .optional({ nullable: true })
     .isIn(["low", "medium", "high", "none"])
-    .withMessage("INVALID_BADGE_VALUE"),
+    .withMessage("Invalid badge value"),
 ];
 
 const taskSubTaskListValidation = [
   body("subtasklist")
     .optional({ nullable: true })
     .custom(isSubtaskArray)
-    .withMessage("INVALID_SUBTASK_LIST"),
+    .withMessage("Invalid Task Value"),
 ];
 
 const taskDescriptionValidation = [body("description").optional()];
@@ -177,7 +174,12 @@ router.post("/:id", authUser, createTaskValidation, function (req, res) {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     });
 });
@@ -198,7 +200,12 @@ router.get("/:id", authUser, (req, res) => {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              err
+            )
           );
       }
 
@@ -281,7 +288,12 @@ router.put("/update/:pid", authUser, taskUpdateValidation, function (req, res) {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              err
+            )
           );
 
       if (result) {
@@ -316,15 +328,18 @@ router.delete("/:pid/:id", authUser, (req, res) => {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              err
+            )
           );
       }
       if (!user) {
         return res
           .status(404)
-          .json(
-            getErrorPayload("DATA_NOT_FOUND", "Project Not Found", 404)
-          );
+          .json(getErrorPayload("DATA_NOT_FOUND", "Project not found", 404));
       }
 
       // Find the task to be deleted within the project
@@ -335,11 +350,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
         return res
           .status(404)
           .json(
-            getErrorPayload(
-              "TASK_NOT_FOUND",
-              "Requested Task Not Found",
-              404
-            )
+            getErrorPayload("TASK_NOT_FOUND", "Requested task not found", 404)
           );
       }
       // Remove the task from the project's task list
@@ -366,7 +377,7 @@ router.delete("/:pid/:id", authUser, (req, res) => {
               return res.status(200).json(
                 getSuccessPayload(
                   "TASK_DELETED_SUCCESS",
-                  "Task Deleted Successfully",
+                  "Task deleted successfully",
                   200,
                   {
                     _id: taskid,
@@ -394,7 +405,12 @@ router.get("/calender/all/", authUser, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            err
+          )
         );
     }
     var arr1 = [];
@@ -431,7 +447,12 @@ router.get("/calender/:pid/", authUser, (req, res) => {
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, err)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              err
+            )
           );
       }
 
