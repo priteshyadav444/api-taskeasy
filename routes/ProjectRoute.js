@@ -23,7 +23,12 @@ router.get("/", authUser, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     }
 
@@ -37,14 +42,11 @@ router.get("/", authUser, (req, res) => {
 const projectTitleValidation = [
   body("project_title")
     .notEmpty()
-    .withMessage("PROJECT_TITLE_REQUIRED")
+    .withMessage("Project titlt required")
     .bail()
     .customSanitizer((value) => value.trim())
     .isLength({ max: 50 })
-    .withMessage("PROJECT_TITLE_TOO_LONG")
-    .bail()
-    .notEmpty()
-    .withMessage("PROJECT_TITLE_REQUIRED")
+    .withMessage("Project title is too long max 50 charecter allowed")
     .bail(),
 ];
 
@@ -63,7 +65,7 @@ const projectStartValidation = [
 const projectDeadlineValidation = [
   body("project_deadline")
     .notEmpty()
-    .withMessage("PROJECT_DEADLINE_REQUIRED")
+    .withMessage("Project deadline date required")
     .bail()
     .custom((value, { req }) => {
       const deadline = moment(value, moment.ISO_8601, true); // parse deadline using ISO 8601 format
@@ -77,7 +79,7 @@ const projectDeadlineValidation = [
       const start = moment(req.body.project_start);
 
       if (deadlineWithoutOffset.isBefore(start)) {
-        throw new Error("DEADLINE_MUST_BE_GREATER_THAN_START_DATE");
+        throw new Error("Deadline must be greater than start date");
       }
 
       return true;
@@ -89,7 +91,7 @@ const themeColourValidation = [
     .if(body("theme_colour").notEmpty())
     .optional({ nullable: true })
     .isHexColor()
-    .withMessage("INVALID_THEME_COLOUR"),
+    .withMessage("Invalid theme code"),
 ];
 
 const projectCreateValidation = [
@@ -147,7 +149,12 @@ router.post("/", authUser, projectCreateValidation, (req, res) => {
       return res
         .status(400)
         .json(
-          getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+          getErrorPayload(
+            "SERVER_ERROR",
+            "Something went wrong on the server. Please try again later.",
+            400,
+            error
+          )
         );
     });
 });
@@ -167,7 +174,7 @@ const validateProjectExistence = (req, res, next) => {
         return res
           .status(404)
           .json(
-            getErrorPayload("PROJECT_NOT_FOUND", "Project is Not Found", 404)
+            getErrorPayload("PROJECT_NOT_FOUND", "Project is not found", 404)
           );
       }
       next();
@@ -178,7 +185,7 @@ const validateProjectExistence = (req, res, next) => {
 // Check is project is Valid or not
 const validateProjectId = param("projectId")
   .isMongoId()
-  .withMessage("INVALID_PROJECT_ID")
+  .withMessage("Invalid project id")
   .bail();
 
 // v1/projects/123h132g12 (id)
@@ -222,7 +229,7 @@ router.put(
           return res
             .status(404)
             .json(
-              getErrorPayload("PROJECT_NOT_FOUND", "Project is Not Found", 404)
+              getErrorPayload("PROJECT_NOT_FOUND", "Project is not found", 404)
             );
         }
         return res.status(200).json(project);
@@ -231,7 +238,12 @@ router.put(
         return res
           .status(400)
           .json(
-            getErrorPayload("SERVER_ERROR", "Something went wrong on the server. Please try again later.", 400, error)
+            getErrorPayload(
+              "SERVER_ERROR",
+              "Something went wrong on the server. Please try again later.",
+              400,
+              error
+            )
           );
       });
   }
@@ -257,13 +269,7 @@ router.delete("/:projectId", authUser, validateProjectId, async (req, res) => {
     if (!project) {
       return res
         .status(404)
-        .json(
-          getErrorPayload(
-            "PROJECT_NOT_FOUND",
-            "Project not found or already deleted",
-            404
-          )
-        );
+        .json(getErrorPayload("PROJECT_NOT_FOUND", "Project not found", 404));
     }
 
     project.deletedAt = moment.utc();
